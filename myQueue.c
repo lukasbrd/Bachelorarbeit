@@ -152,13 +152,13 @@ int main(void) {
 
     enqueue(q, term, 1);
     enqueue(q, term2, 2);
-    enqueue(q,term3,3);
+    enqueue(q, term3, 3);
     enqueue(q, term4, 4);
 
-    //tCell *res = dequeue(q);
-    //tCell *res2 = dequeue(q);
-    //free(res);
-    //free(res2);
+    // tCell *res = dequeue(q);
+    // tCell *res2 = dequeue(q);
+    // free(res);
+    // free(res2);
 
     printf("Length of Queue: %lu\n", q_size(q));
     printf("Queue is empty: %d\n", is_empty(q));
@@ -167,6 +167,6 @@ int main(void) {
 
     printAllTermsOfCells(q);
     teardown_queue(q);
-    
+
     return 0;
 }
