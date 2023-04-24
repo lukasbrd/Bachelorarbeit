@@ -10,6 +10,8 @@ typedef struct Cell {
     struct Cell *next;
 } tCell;
 
+
+
 // Definition der Queue mit:
 // Pointer auf die erste Zelle
 // Pointer auf die Zweite Zelle
