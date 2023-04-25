@@ -1,26 +1,5 @@
-#include <assert.h>
+#include "queue.h"
 #include <stdio.h>
-#include <stdlib.h>
-
-// Definition einer Zelle
-// size_t ist ein unsigned int
-typedef struct Cell {
-    char *term;
-    size_t term_length;
-    struct Cell *next;
-} tCell;
-
-
-
-// Definition der Queue mit:
-// Pointer auf die erste Zelle
-// Pointer auf die Zweite Zelle
-// Groesse der Queue als unsigned int
-typedef struct workQueue {
-    tCell *first;
-    tCell *last;
-    size_t c;
-} wQueue;
 
 // Queue Initialisierung
 // Es wird Speicher reserviert für 2 Zellen und die Groesse der Queue
@@ -40,7 +19,7 @@ wQueue *init_queue() {
 //  char *const:   term ist ein Konstanter Pointer auf ein char,     Zeiger auf den Text
 // const size_t:   len ist Kontanter unsigned Integer,               Länge des Textes
 
-static void enqueue(wQueue *const q, char *const term, const size_t len) {
+void enqueue(wQueue *const q, char *const term, const size_t len) {
 
     // Ein Pointer auf eine neue Zelle wird erstellt und Speicher reserviert
     tCell *new = (tCell *)malloc(sizeof(tCell));
@@ -93,28 +72,6 @@ tCell *dequeue(wQueue *const q) {
     return res;
 }
 
-/* tears down a cell and its term */
-/*void teardown_cell(tCell **c) {
-    assert(c);
-    assert(*c);
-    assert((*c)->term);
-    free((*c)->term);
-    free(*c);
-    *c = NULL;
-}*/
-
-/* tears down a queue and all its queued items
-void teardown_queue(wQueue **q) {
-    while ((*q)->c > 0) {
-        tCell *cell = dequeue(*q);
-        free(cell->term);
-        free(cell);
-    }
-
-    free(*q);
-    *q = NULL;
-}*/
-
 void teardown_queue(wQueue *q) {
     tCell *res = q->first;
     while (res != NULL) {
@@ -142,33 +99,4 @@ void printAllTermsOfCells(wQueue const *const q) {
         printf("Text: %s\n", tmp->term);
         tmp = tmp->next;
     }
-}
-
-int main(void) {
-    wQueue *q = init_queue();
-
-    char *term = "a";
-    char *term2 = "bc";
-    char *term3 = "def";
-    char *term4 = "ghij";
-
-    enqueue(q, term, 1);
-    enqueue(q, term2, 2);
-    enqueue(q, term3, 3);
-    enqueue(q, term4, 4);
-
-    // tCell *res = dequeue(q);
-    // tCell *res2 = dequeue(q);
-    // free(res);
-    // free(res2);
-
-    printf("Length of Queue: %lu\n", q_size(q));
-    printf("Queue is empty: %d\n", is_empty(q));
-    printf("Size of q:  %ld\n", sizeof(wQueue));
-    printf("Size of size_t:  %ld\n", sizeof(size_t));
-
-    printAllTermsOfCells(q);
-    teardown_queue(q);
-
-    return 0;
 }
