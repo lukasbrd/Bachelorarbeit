@@ -1,5 +1,7 @@
 #include "queue.h"
+#include "hash.h"
 #include <stdio.h>
+#include <string.h>
 
 // Queue Initialisierung
 // Es wird Speicher reserviert für 2 Zellen und die Groesse der Queue
@@ -11,6 +13,8 @@ wQueue *init_queue() {
     q->first = NULL;
     q->last = NULL;
     q->c = 0;
+    q->in_mem = 0;
+    q->not_in_mem = NULL;
     return q;
 }
 
@@ -19,7 +23,7 @@ wQueue *init_queue() {
 //  char *const:   term ist ein Konstanter Pointer auf ein char,     Zeiger auf den Text
 // const size_t:   len ist Kontanter unsigned Integer,               Länge des Textes
 
-void enqueue(wQueue *const q, char *const term, const size_t len) {
+void enqueue(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
 
     // Ein Pointer auf eine neue Zelle wird erstellt und Speicher reserviert
     tCell *new = (tCell *)malloc(sizeof(tCell));
@@ -33,6 +37,9 @@ void enqueue(wQueue *const q, char *const term, const size_t len) {
     new->term_length = len;
     // Der Zeiger auf die nächste Zelle wird auf NULL gesetzt
     new->next = NULL;
+
+    //Der Hashwert wird in die Zelle eingefügt
+    memcpy(new->digest, digest, HASH_LEN);
 
     // Wenn die Queue leer ist, wird die erste Zelle eingefügt
     if (q->first == NULL) { // Warum nicht q->c == 0?
