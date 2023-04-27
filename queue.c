@@ -23,10 +23,11 @@ wQueue *init_queue() {
 //  char *const:   term ist ein Konstanter Pointer auf ein char,     Zeiger auf den Text
 // const size_t:   len ist Kontanter unsigned Integer,               Länge des Textes
 
-void enqueue(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
+tCell *enqueue(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
 
     // Ein Pointer auf eine neue Zelle wird erstellt und Speicher reserviert
     tCell *new = (tCell *)malloc(sizeof(tCell));
+    
 
     // Die Groesse der Queue wird im 1 erhoeht
     q->c++;
@@ -55,7 +56,9 @@ void enqueue(wQueue *const q, char *const term, const size_t len, const char dig
         q->last->next = new;
         q->last = new;
     }
-    writeToBuffer(new);
+    printf("Text: %s\n", new->term);
+    printf("Length: %ld\n", new->term_length);
+    return q->last;
 }
 
 tCell *dequeue(wQueue *const q) {

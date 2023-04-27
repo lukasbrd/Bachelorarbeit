@@ -1,23 +1,22 @@
+#include "hash.h"
 #include "queue.h"
 #include <stdio.h>
-#include "hash.h"
 #include <string.h>
 
-//Jeweils Hexadezimalzeichen produzieren ein Byte 
-//daher müssen 41 Byte reserviert werden
-
-int writeToBuffer(tCell *new) {
+// Jeweils Hexadezimalzeichen produzieren ein Byte
+// daher müssen 41 Byte reserviert werden
+int writeToBuffer(tCell *cell) {
     FILE *fp;
 
     char readablehash[READABLE_HASH_LEN];
-    print_readable_digest(new->digest, readablehash);
+    print_readable_digest(cell->digest, readablehash);
 
-    char path[48];
+    char path[48] = ""; 
 
     char directory[] = "buffer/";
-    strcpy(path,directory);
-    strcat(path,readablehash);
-    printf("Path: %s\n",path);
+    strcpy(path, directory);
+    strcat(path, readablehash);
+    printf("Path to File: %s\n\n", path);
 
     fp = fopen(path, "w+");
 
@@ -26,45 +25,29 @@ int writeToBuffer(tCell *new) {
         return -1;
     }
 
-    fputs(new->term,fp);
+    fputs(cell->term, fp);
+    fputs("\n", fp);
+
+    fputs(cell->digest, fp);   //valgrind Fehler an dieser Stelle
+    fputs("\n", fp);
+    
+    char tmp2[33] = "";
+    sprintf(tmp2, "%ld",cell->term_length);
+    fputs(tmp2,fp);
+
     fclose(fp);
     return 0;
 }
 
+int deleteFromBuffer(tCell *cell) {
+    char readablehash[READABLE_HASH_LEN];
+    print_readable_digest(cell->digest, readablehash);
 
+    char path[48] = "";
 
-/* innt writeFile(char *const term, int read, int write) {
-    if (write == read - 1 || (write == 9999 && read == 0)) {
-        return write;
-    } else if (write == 9999 && read != 0) {
-        writeOneField(term, write);
-        write = 0;
-        return write;
-    } else {
-        writeOneField(term, write);
-        write = write + 1;
-        return write;
-    }
+    char directory[] = "buffer/";
+    strcpy(path, directory);
+    strcat(path, readablehash);
+
+    remove(path);
 }
-
-
-int readFromFile(int read, int write) {
-    FILE *fp;
-
-    if (fp == NULL) {
-        perror("Error in opening file");
-        return -1;
-    }
-
-    if (read == write) {
-        // TODO: Lese aus der Datei aus und gib den term zurück
-        // return term;
-    }
-    // Sonst soll einmal gelesen werden und dann ein Feld vorgegangen werden
-    else {
-        // TODO: Lese aus der Datei aus und gib den term zurück
-        read = read + 1;
-        // return term;
-    }
-    fclose(fp);
-} */
