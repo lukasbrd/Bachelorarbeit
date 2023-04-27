@@ -76,6 +76,9 @@ tCell *dequeue(wQueue *const q) {
 
     // Der Zeiger auf die nächste Zelle im Resultat wird entfernt
     res->next = NULL;
+
+    free(res->term); // Selbst hinzugefügt. Wegen der Dummy-Daten.
+
     return res;
 }
 
@@ -103,6 +106,7 @@ void printAllTermsOfCells(wQueue const *const q) {
     tCell *tmp = q->first;
 
     while (tmp != NULL) {
+        printf("Length: %ld\n", tmp->term_length);
         printf("Text: %s\n", tmp->term);
         tmp = tmp->next;
     }

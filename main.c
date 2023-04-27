@@ -1,28 +1,31 @@
 #include "fileInputOutput.h"
 #include "queue.h"
+#include "randomService.h"
 #include "stdio.h"
 #include "string.h"
+#include <time.h>
 
 int main(void) {
     wQueue *q = init_queue();
 
-
-    char *term = "abcd";
-    size_t len = strlen(term);
-    char digest[HASH_LEN];
-    sha1(term,len,digest);
-
-
-    enqueue(q, term, len, digest);
-
-
-    printf("Length of Queue: %lu\n", q_size(q));
-    printf("Queue is empty: %d\n", is_empty(q));
-    printf("Size of q:  %ld\n", sizeof(wQueue));
-    printf("Size of size_t:  %ld\n", sizeof(size_t));
+    srand(time(NULL));
+    int i;
+    for (i = 0; i < 6; i++) {
+        char *randomString = createRandomString();
+        size_t len = strlen(randomString);
+        char digest[HASH_LEN];
+        sha1(randomString, len, digest);
+        enqueue(q, randomString, len, digest);
+    }
 
     printAllTermsOfCells(q);
-    teardown_queue(q);
 
+    printf("Length of Queue: %lu\n", q_size(q));
+
+    // printf("Queue is empty: %d\n", is_empty(q));
+    // printf("Size of q:  %ld\n", sizeof(wQueue));
+    // printf("Size of size_t:  %ld\n", sizeof(size_t));
+
+    teardown_queue(q);
     return 0;
 }
