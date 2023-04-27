@@ -55,6 +55,7 @@ void enqueue(wQueue *const q, char *const term, const size_t len, const char dig
         q->last->next = new;
         q->last = new;
     }
+    writeToBuffer(new);
 }
 
 tCell *dequeue(wQueue *const q) {

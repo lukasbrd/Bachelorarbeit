@@ -1,4 +1,3 @@
-#include "fileInputOutput.h"
 #include "queue.h"
 #include "randomService.h"
 #include "stdio.h"
@@ -10,16 +9,16 @@ int main(void) {
 
     srand(time(NULL));
     int i;
-    for (i = 0; i < 6; i++) {
-        char *randomString = createRandomString();
+    for (i = 0; i < 2; i++) {
+        char *const randomString = createRandomString();
         size_t len = strlen(randomString);
         char digest[HASH_LEN];
         sha1(randomString, len, digest);
         enqueue(q, randomString, len, digest);
     }
 
-    printAllTermsOfCells(q);
 
+    printAllTermsOfCells(q);
     printf("Length of Queue: %lu\n", q_size(q));
 
     // printf("Queue is empty: %d\n", is_empty(q));
