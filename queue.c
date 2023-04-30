@@ -80,7 +80,6 @@ tCell *dequeue(wQueue *const q) {
     // Der Zeiger auf die nächste Zelle im Resultat wird entfernt
     res->next = NULL;
 
-    free(res->term); // Selbst hinzugefügt. Wegen der Dummy-Daten.
     return res;
 }
 

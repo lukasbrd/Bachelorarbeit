@@ -2,17 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-char *createRandomString() {
+char *createRandomString(char *term) {
     int stringLength;
-    stringLength = 1 + rand() % 50;
+    stringLength = (rand() % 50) + 1;
 
     int i;
-    char *randomString = malloc(stringLength+1);
-
     for (i = 0; i < stringLength; i++) {
-        randomString[i] = (char)(rand() % (ASCII_END - ASCII_START)) + ASCII_START;
+        term[i] = (char)(rand() % (ASCII_END - ASCII_START)) + ASCII_START;
     }
-    randomString[i] = '\0';
-    return randomString;
+    term[i] = '\0';
+    return term;
 }
+

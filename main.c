@@ -8,11 +8,13 @@ int main(void) {
     wQueue *q = init_queue();
     size_t len = 0;
     char digest[HASH_LEN] = "";
+    char term[51];
     srand(time(NULL));
-
     int i;
+
+    //Das Array hier erstellen und den Pointer dazu übergeben!!
     for (i = 0; i < 1; i++) {
-        char *const term = createRandomString();
+        createRandomString(term);
         size_t len = strlen(term);
         hash(term, len, digest);
         //writeOnlyToBuffer(term,len,digest);
