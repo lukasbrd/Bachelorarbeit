@@ -7,19 +7,23 @@
 int main(void) {
     wQueue *q = init_queue();
     size_t len = 0;
+    tCell *res = NULL;
     char digest[HASH_LEN] = "";
-    char term[51];
+    char term[51] = "";
     srand(time(NULL));
     int i;
 
-    //Das Array hier erstellen und den Pointer dazu übergeben!!
-    for (i = 0; i < 1; i++) {
+    for (i = 0; i < 2; i++) {
         createRandomString(term);
         size_t len = strlen(term);
         hash(term, len, digest);
-        //writeOnlyToBuffer(term,len,digest);
         enqueue(q, term, len, digest);
+        writeToBuffer(term, len, digest);
     }
+
+    res = dequeue(q);
+    free(res);
+    deleteFromBuffer(q->first);
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n", q_size(q));

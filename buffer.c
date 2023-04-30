@@ -42,7 +42,7 @@
 }*/
 
 
-int writeOnlyToBuffer(char *const term, const size_t len,const char digest[HASH_LEN]) {
+int writeToBuffer(char *const term, const size_t len,const char digest[HASH_LEN]) {
     FILE *fp;
 
     char readablehash[READABLE_HASH_LEN];
@@ -64,12 +64,6 @@ int writeOnlyToBuffer(char *const term, const size_t len,const char digest[HASH_
 
     fputs(term, fp);
     fputs("\n", fp);
-    
-    for(int i=0; i < HASH_LEN; i++) {
-        fputc(digest[i],fp);
-    }
-    fputs("\n", fp);
-
     
     char tmp[8] = "";
     sprintf(tmp, "%ld", len);

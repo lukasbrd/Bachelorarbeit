@@ -8,7 +8,7 @@ char *createRandomString(char *term) {
 
     int i;
     for (i = 0; i < stringLength; i++) {
-        term[i] = (char)(rand() % (ASCII_END - ASCII_START)) + ASCII_START;
+        term[i] = (char)(rand() % ('Z' - 'A')) + 'A';
     }
     term[i] = '\0';
     return term;

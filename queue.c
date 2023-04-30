@@ -57,7 +57,6 @@ void enqueue(wQueue *const q, char *const term, const size_t len, const char dig
     }
     printf("Text: %s\n", new->term);
     printf("Length: %ld\n", new->term_length);
-    writeOnlyToBuffer(term, len, digest);
 }
 
 tCell *dequeue(wQueue *const q) {
