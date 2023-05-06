@@ -3,20 +3,22 @@
 #include <stdio.h>
 #include <string.h>
 
-// Jeweils 2 Hexadezimalzeichen produzieren ein Byte
-// daher müssen 41 Byte reserviert werden
-/*int writeToBuffer(tCell *cell) {
+int writeToBuffer(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
     FILE *fp;
 
     char readablehash[READABLE_HASH_LEN];
-    print_readable_digest(cell->digest, readablehash);
+    print_readable_digest(digest, readablehash);
+    if (q->not_in_mem_first != "") {
+        memcpy(q->not_in_mem_first, readablehash, READABLE_HASH_LEN);
+    }
+    printf("Hier1: %s\n\n", q->not_in_mem_first);
 
     char path[48] = "";
 
     char directory[] = "buffer/";
     strcpy(path, directory);
     strcat(path, readablehash);
-    printf("Path to File: %s\n\n", path);
+    printf("Writingpath to File: %s\n\n", path);
 
     fp = fopen(path, "w+");
 
@@ -24,27 +26,13 @@
         perror("Error in opening file");
         return -1;
     }
-
-    fputs(cell->term, fp);
-    fputs("\n", fp);
-    free(cell->term);
-
-
-    fputs(cell->digest, fp);   //valgrind Fehler
-    fputs("\n", fp);
-    
-    char tmp2[33] = "";
-    sprintf(tmp2, "%ld", cell->term_length);
-    fputs(tmp2, fp);
-
+    fprintf(fp, "%zu %s %s", len, term, readablehash);
     fclose(fp);
+    fp = NULL;
     return 0;
-}*/
+}
 
-
-int writeToBuffer(char *const term, const size_t len,const char digest[HASH_LEN]) {
-    FILE *fp;
-
+int deleteFromBuffer(const char digest[HASH_LEN]) {
     char readablehash[READABLE_HASH_LEN];
     print_readable_digest(digest, readablehash);
 
@@ -53,35 +41,42 @@ int writeToBuffer(char *const term, const size_t len,const char digest[HASH_LEN]
     char directory[] = "buffer/";
     strcpy(path, directory);
     strcat(path, readablehash);
-    printf("Path to File: %s\n\n", path);
 
-    fp = fopen(path, "w+");
+    remove(path);
+}
+
+int readFromBufferToQueue(wQueue *const q) {
+    FILE *fp;
+    char readablehash[READABLE_HASH_LEN];
+    memcpy(readablehash, q->not_in_mem_first, READABLE_HASH_LEN);
+    char path[48] = "";
+    char directory[] = "buffer/";
+    strcpy(path, directory);
+    strcat(path, readablehash);
+    printf("Readingpath to File: %s\n\n", path);
+
+    fp = fopen(path, "r");
 
     if (fp == NULL) {
         perror("Error in opening file");
         return -1;
     }
 
-    fputs(term, fp);
-    fputs("\n", fp);
+    size_t len = 0;
+    char readhash[READABLE_HASH_LEN] = "";
+    char digest[HASH_LEN] = "";
     
-    char tmp[8] = "";
-    sprintf(tmp, "%ld", len);
-    fputs(tmp, fp);
+    fscanf(fp, "%zu", &len);
+    char term[len+1];
+
+    fscanf(fp,"%s %s", term, readhash);
+
+    printf("Length: %zu\n", len);
+    printf("Term: %s\n", term);
+    printf("ReadHash: %s\n\n", readhash);
 
     fclose(fp);
-    return 0;
+    fp = NULL;
+    hash(term,strlen(term),digest);
+    enqueue(q, term, len, digest);
 }
-
-    int deleteFromBuffer(tCell *cell) {
-        char readablehash[READABLE_HASH_LEN];
-        print_readable_digest(cell->digest, readablehash);
-
-        char path[48] = "";
-
-        char directory[] = "buffer/";
-        strcpy(path, directory);
-        strcat(path, readablehash);
-
-        remove(path);
-    }

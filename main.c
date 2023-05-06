@@ -11,19 +11,21 @@ int main(void) {
     char digest[HASH_LEN] = "";
     char term[51] = "";
     srand(time(NULL));
-    int i;
 
-    for (i = 0; i < 2; i++) {
+    int i;
+    for (i = 0; i < 1; i++) {
         createRandomString(term);
         size_t len = strlen(term);
         hash(term, len, digest);
-        enqueue(q, term, len, digest);
-        writeToBuffer(term, len, digest);
+        writeToBuffer(q,term, len, digest);
+        readFromBufferToQueue(q);
     }
 
+    /*
+    deleteFromBuffer(q->first->digest);
     res = dequeue(q);
-    free(res);
-    deleteFromBuffer(q->first);
+    free(res);*/
+    
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n", q_size(q));
