@@ -22,7 +22,6 @@ int writeToBuffer(wQueue *const q, char *const term, const size_t len, const cha
         perror("Error in opening file");
         return -1;
     }
-    printf("Currentpath to File: %s\n\n", currentPath);
     fprintf(fp, "%zu %s ", len, term);
     fclose(fp);
 
@@ -38,7 +37,6 @@ int writeToBuffer(wQueue *const q, char *const term, const size_t len, const cha
             perror("Error in opening file");
             return -1;
         }
-        printf("Firstelementpath to File: %s\n\n", firstElementPath);
         fprintf(fp, "%s", currentReadableHash);
         fclose(fp);
     } else {
@@ -53,7 +51,6 @@ int writeToBuffer(wQueue *const q, char *const term, const size_t len, const cha
             return -1;
         }
         fprintf(fp, "%s", currentReadableHash);
-        printf("Lastpath to File: %s\n\n", lastPath);
         memcpy(q->not_in_mem_last, currentReadableHash, READABLE_HASH_LEN);
         fclose(fp);
     }
@@ -65,17 +62,33 @@ int writeToBuffer(wQueue *const q, char *const term, const size_t len, const cha
     return 0;
 }
 
-int deleteFromBuffer(const char digest[HASH_LEN]) {
-    char readablehash[READABLE_HASH_LEN];
-    print_readable_digest(digest, readablehash);
-    printf("DeleteHash: %s\n", readablehash);
+int deleteFromBuffer(wQueue *const q,const char digest[HASH_LEN]) {
+    FILE *fp;
+    char oldFirstReadablehash[READABLE_HASH_LEN];
+    char newFirstReadablehash[READABLE_HASH_LEN];
+    print_readable_digest(digest, oldFirstReadablehash);
 
     char path[48] = "";
-
     char directory[] = "buffer/";
     strcpy(path, directory);
-    strcat(path, readablehash);
+    strcat(path, oldFirstReadablehash);
 
+    fp = fopen(path, "r");
+    if (fp == NULL) {
+        perror("Error in opening file");
+        return -1;
+    }
+    size_t len = 0;
+    fscanf(fp, "%zu", &len);
+    char term[len];
+    fscanf(fp, "%s %s",term,newFirstReadablehash);
+    memcpy(q->not_in_mem_first,newFirstReadablehash,READABLE_HASH_LEN);
+    fclose(fp);
+
+    fp = fopen("buffer/start", "w");
+    fprintf(fp, "%s", newFirstReadablehash);
+    fclose(fp);
+    fp = NULL;
     remove(path);
 }
 
@@ -87,7 +100,6 @@ int readFromBufferToQueue(wQueue *const q) {
     char directory[] = "buffer/";
     strcpy(path, directory);
     strcat(path, oldFirstreadablehash);
-    printf("Readingpath to File: %s\n\n", path);
 
     fp = fopen(path, "r");
 
@@ -101,9 +113,15 @@ int readFromBufferToQueue(wQueue *const q) {
     char digest[HASH_LEN] = "";
 
     fscanf(fp, "%zu", &len);
+    fclose(fp);
     char term[len];
-    fscanf(fp, "%s %s", term, newFirstreadablehash);
+
+    fp = fopen(path, "r");
+    fscanf(fp, "%zu %s %s",&len, term, newFirstreadablehash);
     memcpy(q->not_in_mem_first, newFirstreadablehash, READABLE_HASH_LEN);
+    printf("Len1: %ld\n", len);
+    printf("Term1: %s\n", term);
+    printf("Hash1: %s\n", newFirstreadablehash);
 
     fclose(fp);
     fp = NULL;

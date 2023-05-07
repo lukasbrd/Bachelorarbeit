@@ -28,14 +28,15 @@ int main(void) {
 
     // Thread2:
     readFromBufferToQueue(q);
-    deleteFromBuffer(q->first->digest);
+    deleteFromBuffer(q,q->first->digest);
     res = dequeue(q);
     free(res);
 
+
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n", q_size(q));
-
     printAllTermsOfCells(q);
+
     teardown_queue(q);
     return 0;
 }
