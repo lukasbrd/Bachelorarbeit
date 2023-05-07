@@ -56,7 +56,7 @@ int writeToBuffer(wQueue *const q, char *const term, const size_t len, const cha
     }
     fp = NULL;
     q->in_mem++;
-    if (q->in_mem > 2 && q->not_in_mem_first[0] == '\0') {
+    if (q->in_mem > 5 && q->not_in_mem_first[0] == '\0') {
         memcpy(q->not_in_mem_first, currentReadableHash, READABLE_HASH_LEN);
     }
     return 0;

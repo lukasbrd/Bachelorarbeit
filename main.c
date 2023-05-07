@@ -14,11 +14,11 @@ int main(void) {
     
     // Thread1:
     int i;
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 10; i++) {
         term = createRandomString(term);
         len = strlen(term);
         hash(term, len, digest);
-        if (q->c < 2) {
+        if (q->c < 5) {
             enqueue(q, term, len, digest);
             writeToBuffer(q, term, len, digest);
         } else {
