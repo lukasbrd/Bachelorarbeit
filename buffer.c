@@ -27,7 +27,6 @@ int writeToBuffer(wQueue *const q, char *const term, const size_t len, const cha
     fclose(fp);
 
     if (q->in_mem == 0) {
-        memcpy(q->not_in_mem_first, currentReadableHash, READABLE_HASH_LEN);
         memcpy(q->not_in_mem_last, currentReadableHash, READABLE_HASH_LEN);
 
         strcpy(firstElementPath, directory);
@@ -54,12 +53,15 @@ int writeToBuffer(wQueue *const q, char *const term, const size_t len, const cha
             return -1;
         }
         fprintf(fp, "%s", currentReadableHash);
-        printf("Lastpath to File: %s\n\n", firstElementPath);
+        printf("Lastpath to File: %s\n\n", lastPath);
         memcpy(q->not_in_mem_last, currentReadableHash, READABLE_HASH_LEN);
         fclose(fp);
     }
     fp = NULL;
     q->in_mem++;
+    if(q->in_mem > 2 && q->not_in_mem_first[0] == '\0') {
+        memcpy(q->not_in_mem_first, currentReadableHash, READABLE_HASH_LEN);
+    }
     return 0;
 }
 
@@ -79,12 +81,12 @@ int deleteFromBuffer(const char digest[HASH_LEN]) {
 
 int readFromBufferToQueue(wQueue *const q) {
     FILE *fp;
-    char readablehash[READABLE_HASH_LEN];
-    memcpy(readablehash, q->not_in_mem_first, READABLE_HASH_LEN);
+    char oldFirstreadablehash[READABLE_HASH_LEN];
+    memcpy(oldFirstreadablehash, q->not_in_mem_first, READABLE_HASH_LEN);
     char path[48] = "";
     char directory[] = "buffer/";
     strcpy(path, directory);
-    strcat(path, readablehash);
+    strcat(path, oldFirstreadablehash);
     printf("Readingpath to File: %s\n\n", path);
 
     fp = fopen(path, "r");
@@ -95,21 +97,18 @@ int readFromBufferToQueue(wQueue *const q) {
     }
 
     size_t len = 0;
-    char readhash[READABLE_HASH_LEN] = "";
+    char newFirstreadablehash[READABLE_HASH_LEN] = "";
     char digest[HASH_LEN] = "";
 
     fscanf(fp, "%zu", &len);
-    char term[len + 1];
-
-    fscanf(fp, "%s %s", term, readhash);
-    memcpy(q->not_in_mem_first, readhash, READABLE_HASH_LEN);
-
-    // printf("Length: %zu\n", len);
-    // printf("Term: %s\n", term);
-    // printf("ReadHash: %s\n\n", readhash);
+    char term[len];
+    fscanf(fp, "%s %s", term, newFirstreadablehash);
+    memcpy(q->not_in_mem_first, newFirstreadablehash, READABLE_HASH_LEN);
 
     fclose(fp);
     fp = NULL;
     hash(term, strlen(term), digest);
     enqueue(q, term, len, digest);
+    q->in_mem--;
+    return 0;
 }

@@ -12,31 +12,30 @@ int main(void) {
     char term[51] = "";
     srand(time(NULL));
 
+    // Thread1:
     int i;
     for (i = 0; i < 4; i++) {
         createRandomString(term);
         size_t len = strlen(term);
         hash(term, len, digest);
-        writeToBuffer(q, term, len, digest);
+        if (q->c < 2) {
+            enqueue(q, term, len, digest);
+            writeToBuffer(q, term, len, digest);
+        } else {
+            writeToBuffer(q,term,len,digest);
+        }
     }
-    /*
-    deleteFromBuffer(q->first->digest);
-    res = dequeue(q);
-    free(res);
-    readFromBufferToQueue(q);
 
+    // Thread2:
+    readFromBufferToQueue(q);
     deleteFromBuffer(q->first->digest);
     res = dequeue(q);
     free(res);
-    readFromBufferToQueue(q); */
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n", q_size(q));
 
-    // printf("Queue is empty: %d\n", is_empty(q));
-    // printf("Size of q:  %ld\n", sizeof(wQueue));
-    // printf("Size of size_t:  %ld\n", sizeof(size_t));
-
+    printAllTermsOfCells(q);
     teardown_queue(q);
     return 0;
 }
