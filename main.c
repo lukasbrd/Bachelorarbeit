@@ -13,19 +13,22 @@ int main(void) {
     srand(time(NULL));
 
     int i;
-    for (i = 0; i < 1; i++) {
+    for (i = 0; i < 4; i++) {
         createRandomString(term);
         size_t len = strlen(term);
         hash(term, len, digest);
-        writeToBuffer(q,term, len, digest);
-        readFromBufferToQueue(q);
+        writeToBuffer(q, term, len, digest);
     }
-
     /*
     deleteFromBuffer(q->first->digest);
     res = dequeue(q);
-    free(res);*/
-    
+    free(res);
+    readFromBufferToQueue(q);
+
+    deleteFromBuffer(q->first->digest);
+    res = dequeue(q);
+    free(res);
+    readFromBufferToQueue(q); */
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n", q_size(q));
