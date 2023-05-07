@@ -5,6 +5,7 @@
 char *createRandomString(char *term) {
     int stringLength;
     stringLength = (rand() % 50) + 1;
+    term = (char *) malloc(sizeof(char) * (stringLength+1));
 
     int i;
     for (i = 0; i < stringLength; i++) {

@@ -56,13 +56,13 @@ int writeToBuffer(wQueue *const q, char *const term, const size_t len, const cha
     }
     fp = NULL;
     q->in_mem++;
-    if(q->in_mem > 2 && q->not_in_mem_first[0] == '\0') {
+    if (q->in_mem > 2 && q->not_in_mem_first[0] == '\0') {
         memcpy(q->not_in_mem_first, currentReadableHash, READABLE_HASH_LEN);
     }
     return 0;
 }
 
-int deleteFromBuffer(wQueue *const q,const char digest[HASH_LEN]) {
+int deleteFromBuffer(wQueue *const q, const char digest[HASH_LEN]) {
     FILE *fp;
     char oldFirstReadablehash[READABLE_HASH_LEN];
     char newFirstReadablehash[READABLE_HASH_LEN];
@@ -81,8 +81,8 @@ int deleteFromBuffer(wQueue *const q,const char digest[HASH_LEN]) {
     size_t len = 0;
     fscanf(fp, "%zu", &len);
     char term[len];
-    fscanf(fp, "%s %s",term,newFirstReadablehash);
-    memcpy(q->not_in_mem_first,newFirstReadablehash,READABLE_HASH_LEN);
+    fscanf(fp, "%s %s", term, newFirstReadablehash);
+    memcpy(q->not_in_mem_first, newFirstReadablehash, READABLE_HASH_LEN);
     fclose(fp);
 
     fp = fopen("buffer/start", "w");
@@ -114,18 +114,22 @@ int readFromBufferToQueue(wQueue *const q) {
 
     fscanf(fp, "%zu", &len);
     fclose(fp);
-    char term[len];
+    char *term = (char *)malloc(sizeof(char) * (len + 1));
 
     fp = fopen(path, "r");
-    fscanf(fp, "%zu %s %s",&len, term, newFirstreadablehash);
+
+    if (fp == NULL) {
+        perror("Error in opening file");
+        return -1;
+    }
+
+    fscanf(fp, "%zu %s %s", &len, term, newFirstreadablehash);
     memcpy(q->not_in_mem_first, newFirstreadablehash, READABLE_HASH_LEN);
-    printf("Len1: %ld\n", len);
-    printf("Term1: %s\n", term);
-    printf("Hash1: %s\n", newFirstreadablehash);
 
     fclose(fp);
     fp = NULL;
     hash(term, strlen(term), digest);
+    printf("Buffer:\n");
     enqueue(q, term, len, digest);
     q->in_mem--;
     return 0;

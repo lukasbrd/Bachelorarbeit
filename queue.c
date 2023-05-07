@@ -42,6 +42,7 @@ tCell *dequeue(wQueue *const q) {
     q->c--;
 
     tCell *res = q->first;
+    free(res->term);
     q->first = q->first->next;
 
     if (q->first == NULL) {
