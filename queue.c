@@ -9,8 +9,6 @@ wQueue *init_queue() {
     q->last = NULL;
     q->c = 0;
     q->in_mem = 0;
-    strcpy(q->not_in_mem_first, "");
-    strcpy(q->not_in_mem_last, "");
     return q;
 }
 
@@ -42,7 +40,6 @@ tCell *dequeue(wQueue *const q) {
     q->c--;
 
     tCell *res = q->first;
-    free(res->term);
     q->first = q->first->next;
 
     if (q->first == NULL) {
@@ -53,9 +50,10 @@ tCell *dequeue(wQueue *const q) {
 }
 
 void teardown_queue(wQueue *q) {
-    tCell *res = q->first;
-    while (res != NULL) {
+    tCell *res = NULL;
+    while (q->c != 0) {
         res = dequeue(q);
+        free(res->term);
         free(res);
     }
     free(q);
