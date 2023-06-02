@@ -6,7 +6,7 @@
 
 int main(void) {
     wQueue *q = init_queue();
-    size_t len = 0;
+    size_t len = 100;
     tCell *res = NULL;
     char digest[HASH_LEN] = "";
     char *term;
@@ -19,11 +19,8 @@ int main(void) {
         len = strlen(term);
         hash(term, len, digest);
         enqueue(q, term, len, digest);
+        writeToStorage(q,term,len,digest);
     }
-    /*
-    res = dequeue(q);
-    free(res->term);
-    free(res);*/
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n", q_size(q));
