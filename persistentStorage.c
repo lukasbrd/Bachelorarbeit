@@ -56,16 +56,14 @@ int readAllFromStorageToQueue(wQueue *const q) {
         while (dp = readdir(dir)) {
             if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
                 fd = openat(dirfd(dir), dp->d_name, O_RDONLY);
-                printf("dp: %s\n",dp->d_name);
                 read(fd, buf, 28);
                 memcpy(digest, buf, 20);
                 memcpy(&len, buf + 20, sizeof(size_t));
-                char term[len+1];
+                char *term = (char *) malloc(sizeof(char) * (len + 1));
                 term[len] = '\0';
                 read(fd,term,len);
+                enqueue(q, term, len, digest);
                 close(fd);
-                printf("len: %ld\n", len);
-                printf("term: %s\n", term);
             }
         }
     } else {

@@ -14,8 +14,6 @@ int main(void) {
 
     readAllFromStorageToQueue(q); 
 
-    /*
-    // Thread1:
     int i;
     for (i = 0; i < 3; i++) {
         term = createRandomString(term);
@@ -25,11 +23,10 @@ int main(void) {
         writeToStorage(q, term, len, digest);
     }
 
-    // Thread2:
     res = dequeue(q);
     deleteFromStorage(res->digest);
     free(res->term);
-    free(res);*/
+    free(res);
     
 
     printf("\n\n----------------------------------------------------------------\n");
