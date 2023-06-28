@@ -29,8 +29,8 @@ int main(void) {
     res = dequeue(q);
     deleteFromStorage(res->digest);
     free(res->term);
-    free(res);
-    */
+    free(res);*/
+    
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n\n", q_size(q));
