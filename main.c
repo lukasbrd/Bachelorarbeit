@@ -33,7 +33,7 @@ void *dequeueTerms(void *arg) {
 
     res = dequeue(q);
     while (res != NULL) {
-        //deleteFromStorage(res->digest);
+        deleteFromStorage(res->digest);
         free(res->term);
         free(res);
         res = dequeue(q);
@@ -44,6 +44,7 @@ void *dequeueTerms(void *arg) {
 int main(void) {
     wQueue *q = init_queue();
     //readAllFromStorageToQueue(q);
+    
     pthread_mutex_init(&mutex, NULL);
 
     pthread_t t1;
