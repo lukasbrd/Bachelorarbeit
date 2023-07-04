@@ -20,7 +20,7 @@ void writeToStorage(wQueue *const q, char *const term, const size_t len, const c
     }
 
     // create table
-    const char *sql = "CREATE TABLE IF NOT EXISTS state(Id INTEGER PRIMARY KEY, term TEXT, len INT, digest TEXT);";
+    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB PRIMARY KEY, len INT, term TEXT);";
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot create table: %s\n", sqlite3_errmsg(db));
@@ -28,7 +28,7 @@ void writeToStorage(wQueue *const q, char *const term, const size_t len, const c
     }
 
     // prepare statement
-    const char *sql2 = "INSERT INTO state (term, len, digest) VALUES (?,?,?)";
+    const char *sql2 = "INSERT INTO state (digest, len, term) VALUES (?,?,?)";
     rc = sqlite3_prepare_v2(db, sql2, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
@@ -37,9 +37,9 @@ void writeToStorage(wQueue *const q, char *const term, const size_t len, const c
     }
 
     // bind parameters
-    rc = sqlite3_bind_text(stmt, 1, term, -1, SQLITE_TRANSIENT);
+    rc = sqlite3_bind_blob(stmt, 1, digest, 20, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        printf("Cannot bind term: %s\n", sqlite3_errmsg(db));
+        printf("Cannot bind digest: %s\n", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         sqlite3_close(db);
     }
@@ -51,9 +51,9 @@ void writeToStorage(wQueue *const q, char *const term, const size_t len, const c
         sqlite3_close(db);
     }
 
-    rc = sqlite3_bind_text(stmt, 3, digest, 20, SQLITE_TRANSIENT);
+    rc = sqlite3_bind_text(stmt, 3, term, -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        printf("Cannot bind digest: %s\n", sqlite3_errmsg(db));
+        printf("Cannot bind term: %s\n", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         sqlite3_close(db);
     }
@@ -74,4 +74,5 @@ void deleteFromStorage(const char digest[HASH_LEN]) {
 }
 
 void readAllFromStorageToQueue(wQueue *const q) {
+    
 }
