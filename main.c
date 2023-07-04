@@ -14,14 +14,14 @@ void *enqueueTerms(void *arg) {
     char digest[HASH_LEN] = "";
     char *term;
     size_t len = 0;
-    
+
     int i;
     for (i = 0; i < 1; i++) {
         term = createRandomString(term);
         len = strlen(term);
         hash(term, len, digest);
         enqueue(q, term, len, digest);
-        //writeToStorage(q, term, len, digest);
+        writeToStorage(q, term, len, digest);
     }
     pthread_mutex_unlock(&mutex);
 }
@@ -41,9 +41,9 @@ void *dequeueTerms(void *arg) {
     pthread_mutex_unlock(&mutex);
 }
 
-int main(void) { 
+int main(void) {
     wQueue *q = init_queue();
-    readAllFromStorageToQueue(q);
+    //readAllFromStorageToQueue(q);
     pthread_mutex_init(&mutex, NULL);
 
     pthread_t t1;
