@@ -7,53 +7,51 @@
 
 pthread_mutex_t mutex;
 
-void *enqueueTerms(void *arg) {
-    pthread_mutex_lock(&mutex);
-    srand(time(NULL));
-    wQueue *q = arg;
-    char digest[HASH_LEN] = "";
-    char *term;
-    size_t len = 0;
-    
-    int i;
-    for (i = 0; i < 1; i++) {
-        term = createRandomString(term);
-        len = strlen(term);
-        hash(term, len, digest);
+void *enqueueTerm(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
+    if (q->c < 2) {
         enqueue(q, term, len, digest);
-        //writeToStorage(q, term, len, digest);
+        writeToStorage(q, term, len, digest);
+    } else {
+        enqueueWithoutTerm(q, term, len, digest);
+        writeToStorage(q, term, len, digest);
     }
-    pthread_mutex_unlock(&mutex);
 }
 
-void *dequeueTerms(void *arg) {
-    pthread_mutex_lock(&mutex);
+tCell *dequeueTerm(void *arg) {
     wQueue *q = arg;
     tCell *res = NULL;
 
-    res = dequeue(q);
-    while (res != NULL) {
-        //deleteFromStorage(res->digest);
-        free(res->term);
-        free(res);
+    if (q->c > 0 && q->c < 2) {
+        res = dequeue(q);
+    } else if(q->c >= 2) {
+        readOneTermFromStorageToQueue(q);
         res = dequeue(q);
     }
-    pthread_mutex_unlock(&mutex);
+    return res;
 }
 
-int main(void) { 
+int main(void) {
     wQueue *q = init_queue();
-    readAllFromStorageToQueue(q);
-    pthread_mutex_init(&mutex, NULL);
+    //readAllFromStorageToQueue(q);
+    srand(time(NULL));
+    char digest[HASH_LEN] = "";
+    char *term;
+    size_t len = 0;
+    tCell *res = NULL;
 
-    pthread_t t1;
-    pthread_create(&t1, NULL, &enqueueTerms, q);
+    int i;
+    for (i = 0; i < 3; i++) {
+        term = createRandomString(term);
+        len = strlen(term);
+        hash(term, len, digest);
+        enqueueTerm(q, term, len, digest);
+    }
 
-    pthread_t t2;
-    pthread_create(&t2, NULL, &dequeueTerms, q);
-
-    pthread_join(t1, NULL);
-    pthread_join(t2, NULL);
+    while (q->c != 0) {
+        res = dequeueTerm(q);
+        free(res->term);
+        free(res);
+    }
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n\n", q_size(q));

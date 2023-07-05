@@ -34,12 +34,37 @@ int writeToStorage(wQueue *const q, char *const term, const size_t len, const ch
 int deleteFromStorage(const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
-    int fd;
 
     char dir[41] = "storage/";
     strcat(dir, readableHash);
 
     int del = remove(dir);
+    return 0;
+}
+
+int readOneTermFromStorageToQueue(wQueue *const q) {
+    char readableHash[READABLE_HASH_LEN];
+    print_readable_digest(q->last->digest, readableHash);
+    int fd;
+    size_t len;
+    char buf[28];
+    char *term;
+
+    char dir[41] = "storage/";
+    strcat(dir, readableHash);
+
+    if ((fd = open(dir, O_RDWR, 00600)) == -1) {
+        perror("Cannot open output file\n");
+        exit(1);
+    }
+
+    read(fd, buf, 28);
+    memcpy(&len, buf + 20, sizeof(size_t));
+    term = (char *)malloc(sizeof(char) * (len + 1));
+    q->last->term = term;
+    
+    close(fd);
+    return 0;
 }
 
 int readAllFromStorageToQueue(wQueue *const q) {
@@ -59,9 +84,9 @@ int readAllFromStorageToQueue(wQueue *const q) {
                 read(fd, buf, 28);
                 memcpy(digest, buf, 20);
                 memcpy(&len, buf + 20, sizeof(size_t));
-                char *term = (char *) malloc(sizeof(char) * (len + 1));
+                char *term = (char *)malloc(sizeof(char) * (len + 1));
                 term[len] = '\0';
-                read(fd,term,len);
+                read(fd, term, len);
                 enqueue(q, term, len, digest);
                 close(fd);
             }
