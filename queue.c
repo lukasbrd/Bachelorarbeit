@@ -8,14 +8,20 @@ wQueue *init_queue() {
     q->first = NULL;
     q->last = NULL;
     q->c = 0;
-    q->in_mem = 0;
+    q->first_not_in_mem = NULL;
     return q;
 }
 
 void enqueue(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
+    writeToStorage(q, term, len, digest);
     tCell *new = (tCell *)malloc(sizeof(tCell));
     q->c++;
-    new->term = term;
+    if (q->c < 2) {
+        new->term = term;
+    } else {
+        free(term);
+        new->term = NULL;
+    }
     new->term_length = len;
     new->next = NULL;
 
@@ -29,25 +35,8 @@ void enqueue(wQueue *const q, char *const term, const size_t len, const char dig
         q->last = new;
     }
 
-    printf("Length: %ld\n", new->term_length);
-    printf("Term: %s\n", new->term);
-}
-
-void enqueueWithoutTerm(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
-    tCell *new = (tCell *)malloc(sizeof(tCell));
-    q->c++;
-    new->term = NULL;
-    new->term_length = len;
-    new->next = NULL;
-
-    memcpy(new->digest, digest, HASH_LEN);
-
-    if (q->first == NULL) {
-        q->first = new;
-        q->last = new;
-    } else {
-        q->last->next = new;
-        q->last = new;
+    if(q->c == 2) {
+        q->first_not_in_mem = new;
     }
 
     printf("Length: %ld\n", new->term_length);
@@ -55,6 +44,12 @@ void enqueueWithoutTerm(wQueue *const q, char *const term, const size_t len, con
 }
 
 tCell *dequeue(wQueue *const q) {
+    if (q->c >= 2) {
+        readOneTermFromStorageToQueue(q);
+    }
+    if(q->first_not_in_mem->next != NULL) {
+        q->first_not_in_mem = q->first_not_in_mem->next;
+    }
     if (q->c == 0) {
         return NULL;
     }
@@ -68,27 +63,27 @@ tCell *dequeue(wQueue *const q) {
     }
     res->next = NULL;
     return res;
-}
+    }
 
-void teardown_queue(wQueue *q) {
+    void teardown_queue(wQueue * q) {
     tCell *res = NULL;
     while (q->c != 0) {
         res = dequeue(q);
-            free(res->term);
+        free(res->term);
         free(res);
     }
     free(q);
-}
+    }
 
-int is_empty(wQueue const *const q) {
+    int is_empty(wQueue const *const q) {
     return (q->first == NULL);
-}
+    }
 
-size_t q_size(wQueue const *const q) {
+    size_t q_size(wQueue const *const q) {
     return q->c;
-}
+    }
 
-void printAllTermsOfCells(wQueue const *const q) {
+    void printAllTermsOfCells(wQueue const *const q) {
     tCell *tmp = q->first;
 
     while (tmp != NULL) {
@@ -96,4 +91,4 @@ void printAllTermsOfCells(wQueue const *const q) {
         printf("Text: %s\n", tmp->term);
         tmp = tmp->next;
     }
-}
+    }

@@ -5,31 +5,6 @@
 #include <pthread.h>
 #include <time.h>
 
-pthread_mutex_t mutex;
-
-void *enqueueTerm(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
-    if (q->c < 2) {
-        enqueue(q, term, len, digest);
-        writeToStorage(q, term, len, digest);
-    } else {
-        enqueueWithoutTerm(q, term, len, digest);
-        writeToStorage(q, term, len, digest);
-    }
-}
-
-tCell *dequeueTerm(void *arg) {
-    wQueue *q = arg;
-    tCell *res = NULL;
-
-    if (q->c > 0 && q->c < 2) {
-        res = dequeue(q);
-    } else if(q->c >= 2) {
-        readOneTermFromStorageToQueue(q);
-        res = dequeue(q);
-    }
-    return res;
-}
-
 int main(void) {
     wQueue *q = init_queue();
     //readAllFromStorageToQueue(q);
@@ -40,15 +15,15 @@ int main(void) {
     tCell *res = NULL;
 
     int i;
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < 4; i++) {
         term = createRandomString(term);
         len = strlen(term);
         hash(term, len, digest);
-        enqueueTerm(q, term, len, digest);
+        enqueue(q, term, len, digest);
     }
 
-    while (q->c != 0) {
-        res = dequeueTerm(q);
+    while (q->c > 0) {
+        res = dequeue(q);
         free(res->term);
         free(res);
     }
@@ -56,6 +31,7 @@ int main(void) {
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n\n", q_size(q));
     printAllTermsOfCells(q);
+    printf("ENDE\n");
 
     teardown_queue(q);
     return 0;

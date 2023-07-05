@@ -42,9 +42,9 @@ int deleteFromStorage(const char digest[HASH_LEN]) {
     return 0;
 }
 
-int readOneTermFromStorageToQueue(wQueue *const q) {
+int readOneTermFromStorageToQueue(wQueue *q) {
     char readableHash[READABLE_HASH_LEN];
-    print_readable_digest(q->last->digest, readableHash);
+    print_readable_digest(q->first_not_in_mem->digest, readableHash);
     int fd;
     size_t len;
     char buf[28];
@@ -61,7 +61,10 @@ int readOneTermFromStorageToQueue(wQueue *const q) {
     read(fd, buf, 28);
     memcpy(&len, buf + 20, sizeof(size_t));
     term = (char *)malloc(sizeof(char) * (len + 1));
-    q->last->term = term;
+    read(fd,term,len);
+    term[len] = '\0';
+    printf("OneTermToQueue:%s\n", term);
+    q->first_not_in_mem->term = term;
     
     close(fd);
     return 0;
