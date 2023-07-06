@@ -5,9 +5,19 @@
 #include <pthread.h>
 #include <time.h>
 
+void enqueueTerm(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
+    q->c++;
+    writeToStorage(q, term, len, digest);
+    if (q->c < 3) {
+        enqueue(q, term, len, digest);
+    } else {
+        enqueueWithoutTerm(q, term, len, digest);
+    }
+}
+
 int main(void) {
     wQueue *q = init_queue();
-    //readAllFromStorageToQueue(q);
+    // readAllFromStorageToQueue(q);
     srand(time(NULL));
     char digest[HASH_LEN] = "";
     char *term;
@@ -19,7 +29,7 @@ int main(void) {
         term = createRandomString(term);
         len = strlen(term);
         hash(term, len, digest);
-        enqueue(q, term, len, digest);
+        enqueueTerm(q, term, len, digest);
     }
 
     while (q->c > 0) {
