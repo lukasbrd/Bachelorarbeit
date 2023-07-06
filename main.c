@@ -15,6 +15,20 @@ void enqueueTerm(wQueue *const q, char *const term, const size_t len, const char
     }
 }
 
+tCell *dequeueTerm(wQueue *const q) {
+    if (q->c == 0) {
+        return NULL;
+    }
+    if (q->c >= 3) {
+        readOneTermFromStorageToQueue(q);
+        if (q->first_not_in_mem->next != NULL) {
+            q->first_not_in_mem = q->first_not_in_mem->next;
+        }
+    }
+    q->c--;
+    return dequeue(q);
+}
+
 int main(void) {
     wQueue *q = init_queue();
     // readAllFromStorageToQueue(q);
@@ -33,7 +47,7 @@ int main(void) {
     }
 
     while (q->c > 0) {
-        res = dequeue(q);
+        res = dequeueTerm(q);
         free(res->term);
         free(res);
     }

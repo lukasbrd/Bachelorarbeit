@@ -58,17 +58,6 @@ void enqueueWithoutTerm(wQueue *const q, char *const term, const size_t len, con
 }
 
 tCell *dequeue(wQueue *const q) {
-    if (q->c >= 3) {
-        readOneTermFromStorageToQueue(q);
-        if (q->first_not_in_mem->next != NULL) {
-            q->first_not_in_mem = q->first_not_in_mem->next;
-        }
-    }
-    if (q->c == 0) {
-        return NULL;
-    }
-    q->c--;
-
     tCell *res = q->first;
     q->first = q->first->next;
 
