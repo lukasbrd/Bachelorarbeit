@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int writeToStorage(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
+int writeToStorage(char *const term, const size_t len, const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
@@ -62,11 +62,13 @@ int readOneTermFromStorageToQueue(wQueue *q) {
     memcpy(&len, buf + 20, sizeof(size_t));
     term = (char *)malloc(sizeof(char) * (len + 1));
     read(fd,term,len);
+    close(fd);
     term[len] = '\0';
     printf("OneTermToQueue:%s\n", term);
     q->first_not_in_mem->term = term;
-    
-    close(fd);
+    if (q->first_not_in_mem->next != NULL) {
+        q->first_not_in_mem = q->first_not_in_mem->next;
+    }
     return 0;
 }
 

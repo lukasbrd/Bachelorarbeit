@@ -19,10 +19,14 @@ int main(void) {
         term = createRandomString(term);
         len = strlen(term);
         hash(term, len, digest);
+        writeToStorage(term, len, digest);
         enqueue(q, term, len, digest);
     }
 
     while (q->c > 0) {
+        if (q->c >= 3) {
+            readOneTermFromStorageToQueue(q);
+        }
         res = dequeue(q);
         free(res->term);
         free(res);

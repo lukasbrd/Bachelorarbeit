@@ -13,7 +13,6 @@ wQueue *init_queue() {
 }
 
 void enqueue(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
-    writeToStorage(q, term, len, digest);
     tCell *new = (tCell *)malloc(sizeof(tCell));
     q->c++;
     if (q->c < 3) {
@@ -44,12 +43,6 @@ void enqueue(wQueue *const q, char *const term, const size_t len, const char dig
 }
 
 tCell *dequeue(wQueue *const q) {
-    if (q->c >= 3) {
-        readOneTermFromStorageToQueue(q);
-        if (q->first_not_in_mem->next != NULL) {
-            q->first_not_in_mem = q->first_not_in_mem->next;
-        }
-    }
     if (q->c == 0) {
         return NULL;
     }
