@@ -3,11 +3,17 @@
 #include <assert.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-int writeToStorage(char *const term, const size_t len, const char digest[HASH_LEN]) {
+void* writeToStorage(void* arg) {
+    StorageData* storageData = (StorageData*) arg;
+    char digest[HASH_LEN] = "";
+    memcpy(digest,storageData->digest,20);
+    size_t len = storageData->len;
+
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
@@ -24,11 +30,12 @@ int writeToStorage(char *const term, const size_t len, const char digest[HASH_LE
 
     memcpy(buf, digest, 20);
     memcpy(buf + 20, &len, sizeof(size_t));
-    memcpy(buf + 28, term, len);
-
+    memcpy(buf + 28, storageData->storageTerm, len);
     write(fd, buf, (28 + len));
     close(fd);
-    return 0;
+    free(storageData->storageTerm);
+    free(storageData);
+    pthread_exit(NULL);
 }
 
 int deleteFromStorage(const char digest[HASH_LEN]) {
@@ -72,6 +79,7 @@ int readOneTermFromStorageToQueue(wQueue *q) {
     return 0;
 }
 
+/*
 int readAllFromStorageToQueue(wQueue *const q) {
     size_t len;
     char digest[HASH_LEN];
@@ -101,4 +109,4 @@ int readAllFromStorageToQueue(wQueue *const q) {
     }
     closedir(dir);
     return 0;
-}
+}*/
