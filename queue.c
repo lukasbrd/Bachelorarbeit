@@ -12,10 +12,13 @@ wQueue *init_queue() {
     return q;
 }
 
-void enqueue(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
+void enqueue(wQueue *const q, char *const term) {
+    char digest[HASH_LEN] = "";
+    size_t len = strlen(term);
+    hash(term, len, digest);
     tCell *new = (tCell *)malloc(sizeof(tCell));
     q->c++;
-    if (q->c < 3) {
+    if (q->c < 2) {
         new->term = term;
     } else {
         free(term);
@@ -34,7 +37,7 @@ void enqueue(wQueue *const q, char *const term, const size_t len, const char dig
         q->last = new;
     }
 
-    if(q->c == 3) {
+    if(q->c == 2) {
         q->first_not_in_mem = new;
     }
 
