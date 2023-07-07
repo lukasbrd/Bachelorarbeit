@@ -7,11 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int writeToStorage(char *const term) {
-    size_t len = 0;
-    char digest[HASH_LEN] = "";
-    len = strlen(term);
-    hash(term, len, digest);
+int writeToStorage(char *const term, const size_t len, char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
@@ -96,7 +92,7 @@ int readAllFromStorageToQueue(wQueue *const q) {
                 char *term = (char *)malloc(sizeof(char) * (len + 1));
                 term[len] = '\0';
                 read(fd, term, len);
-                enqueue(q, term);
+                enqueue(q, term,len,digest);
                 close(fd);
             }
         }

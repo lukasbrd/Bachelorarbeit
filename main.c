@@ -7,20 +7,24 @@
 
 int main(void) {
     wQueue *q = init_queue();
-    //readAllFromStorageToQueue(q);
+    // readAllFromStorageToQueue(q);
     srand(time(NULL));
+    char digest[HASH_LEN] = "";
     char *term;
+    size_t len = 0;
     tCell *res = NULL;
 
     int i;
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < 4; i++) {
         term = createRandomString(term);
-        writeToStorage(term);
-        enqueue(q, term);
+        len = strlen(term);
+        hash(term, len, digest);
+        writeToStorage(term, len, digest);
+        enqueue(q, term, len, digest);
     }
 
     while (q->c > 0) {
-        if (q->c >= 2) {
+        if (q->c >= 3) {
             readOneTermFromStorageToQueue(q);
         }
         res = dequeue(q);

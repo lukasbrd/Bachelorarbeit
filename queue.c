@@ -12,10 +12,7 @@ wQueue *init_queue() {
     return q;
 }
 
-void enqueue(wQueue *const q, char *const term) {
-    char digest[HASH_LEN] = "";
-    size_t len = strlen(term);
-    hash(term, len, digest);
+void enqueue(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
     tCell *new = (tCell *)malloc(sizeof(tCell));
     q->c++;
     if (q->c < 2) {

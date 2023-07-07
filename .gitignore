@@ -3,3 +3,4 @@ CKurs.first.code-workspace
 *
 !.gitignore
 !*.c
+!*.h
