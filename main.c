@@ -19,7 +19,7 @@ int main(void) {
         term = createRandomString(term);
         len = strlen(term);
         hash(term, len, digest);
-        writeToStorage(q, term, len, digest);
+        writeToStorage(term, len, digest);
         enqueue(q, term, len, digest);
     }
 

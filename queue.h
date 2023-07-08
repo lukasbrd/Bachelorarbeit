@@ -45,7 +45,7 @@ int is_empty(wQueue const *const q);
 size_t q_size(wQueue const *const q);
 void printAllTermsOfCells(wQueue const *const q);
 
-int writeToStorage(wQueue *const q, char *const term, const size_t len, char digest[HASH_LEN]);
+int writeToStorage(char *const term, const size_t len, char digest[HASH_LEN]);
 int deleteFromStorage(const char digest[HASH_LEN]);
 int readAllFromStorageToQueue(wQueue *const q);
 int readOneTermFromStorageToQueue(wQueue *const q);
