@@ -7,6 +7,8 @@
 #include <string.h>
 #include <unistd.h>
 
+extern pthread_mutex_t mutex;
+
 int writeToStorage(char *const term, const size_t len, char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
@@ -43,6 +45,7 @@ int deleteFromStorage(const char digest[HASH_LEN]) {
 }
 
 int readOneTermFromStorageToQueue(wQueue *q) {
+    printf("LOOSER1!!\n");
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(q->first_not_in_mem->digest, readableHash);
     int fd;
@@ -58,6 +61,7 @@ int readOneTermFromStorageToQueue(wQueue *q) {
         exit(1);
     }
 
+    printf("LOOSER2!!\n");
     read(fd, buf, 28);
     memcpy(&len, buf + 20, sizeof(size_t));
     term = (char *)malloc(sizeof(char) * (len + 1));
@@ -65,10 +69,12 @@ int readOneTermFromStorageToQueue(wQueue *q) {
     close(fd);
     term[len] = '\0';
     printf("OneTermToQueue:%s\n", term);
+    printf("LOOSER3!!\n");
     q->first_not_in_mem->term = term;
     if (q->first_not_in_mem->next != NULL) {
         q->first_not_in_mem = q->first_not_in_mem->next;
     }
+    printf("LOOSER4!!\n");
     return 0;
 }
 

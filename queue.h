@@ -1,4 +1,6 @@
 #include "hash.h"
+#include <pthread.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 // Definition einer Zelle
