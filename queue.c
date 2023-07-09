@@ -7,20 +7,21 @@ wQueue *init_queue() {
     wQueue *q = (wQueue *)malloc(sizeof(wQueue));
     q->first = NULL;
     q->last = NULL;
-    q->c = 0;
-    q->first_not_in_mem = NULL;
+    q->count_in_mem = 0;
+    q->count_not_in_mem = 0;
     return q;
 }
 
 void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HASH_LEN]) {
     tCell *new = (tCell *)malloc(sizeof(tCell));
-    q->c++;
-    if (q->c < 3) {
-        new->term = term;
-    } else {
-        free(term);
-        new->term = NULL;
+    if(q->count_in_mem <= 2) {
+        new->in_memory = true;
+        q->count_in_mem++;
+    } else if(q->count_in_mem > 2) {
+        new->in_memory = false;
+        q->count_not_in_mem++;
     }
+    new->term=term;
     new->term_length = len;
     new->next = NULL;
 
@@ -34,19 +35,21 @@ void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HA
         q->last = new;
     }
 
-    if(q->c == 3) {
-        q->first_not_in_mem = new;
-    }
-
-    printf("Length: %ld\n", new->term_length);
-    printf("Term: %s\n", new->term);
+    //printf("Length: %ld\n", new->term_length);
+    //printf("Term: %s\n", new->term);
 }
 
+
+
 tCell *dequeue(wQueue *const q) {
-    if (q->c == 0) {
+    if (q->count_in_mem == 0 && q->count_not_in_mem == 0) {
         return NULL;
     }
-    q->c--;
+    if(q->first->in_memory == true) {
+        q->count_in_mem--;
+    } else if (q->first->in_memory == false) {
+        q->count_not_in_mem--;
+    }
 
     tCell *res = q->first;
     q->first = q->first->next;
@@ -60,7 +63,7 @@ tCell *dequeue(wQueue *const q) {
 
     void teardown_queue(wQueue * q) {
     tCell *res = NULL;
-    while (q->c != 0) {
+    while (q->count_in_mem != 0 || q->count_not_in_mem != 0) {
         res = dequeue(q);
         free(res->term);
         free(res);
@@ -72,8 +75,9 @@ tCell *dequeue(wQueue *const q) {
     return (q->first == NULL);
     }
 
+    
     size_t q_size(wQueue const *const q) {
-    return q->c;
+    return q->count_in_mem + q->count_not_in_mem;
     }
 
     void printAllTermsOfCells(wQueue const *const q) {

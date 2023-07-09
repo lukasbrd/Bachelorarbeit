@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *createRandomString(char *term) {
+char *createRandomString() {
     int stringLength;
     stringLength = (rand() % 50) + 1;
-    term = (char *) malloc(sizeof(char) * (stringLength+1));
+    char* term = (char *) malloc(sizeof(char) * (stringLength+1));
 
     int i;
     for (i = 0; i < stringLength; i++) {

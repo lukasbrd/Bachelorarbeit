@@ -42,6 +42,7 @@ int deleteFromStorage(const char digest[HASH_LEN]) {
     return 0;
 }
 
+/*
 int readOneTermFromStorageToQueue(wQueue *q) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(q->first_not_in_mem->digest, readableHash);
@@ -70,7 +71,7 @@ int readOneTermFromStorageToQueue(wQueue *q) {
     }
     close(fd);
     return 0;
-}
+}*/
 
 int readAllFromStorageToQueue(wQueue *const q) {
     size_t len;

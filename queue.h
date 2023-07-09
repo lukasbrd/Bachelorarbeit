@@ -9,6 +9,8 @@ typedef struct Cell {
     char *term;
     char digest[HASH_LEN];
     size_t term_length;
+    bool in_memory;
+    bool persisted;
     struct Cell *next;
 } tCell;
 
@@ -19,23 +21,10 @@ typedef struct Cell {
 typedef struct workQueue {
     tCell *first;
     tCell *last;
-    size_t c;
-    tCell *first_not_in_mem;
+    size_t count_in_mem;
+    size_t count_not_in_mem;
 } wQueue;
 
-typedef struct {
-    wQueue *q;
-    char *storageTerm;
-    size_t len;
-    char digest[HASH_LEN];
-} StorageData;
-
-typedef struct {
-    wQueue *q;
-    char *queueTerm;
-    size_t len;
-    char digest[HASH_LEN];
-} QueueData;
 
 wQueue *init_queue();
 void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HASH_LEN]);
