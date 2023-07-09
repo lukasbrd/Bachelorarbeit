@@ -5,8 +5,6 @@
 #include <pthread.h>
 #include <time.h>
 
-wQueue *q;
-
 void *enqueueThread(void *arg) {
     char **terms = (char **)arg;
     for (int i = 0; i < 4; i++) {
@@ -66,6 +64,6 @@ int main(void) {
     //printAllTermsOfCells(q);
     printf("ENDE\n");
 
-    //teardown_queue(q);
+    teardown_queue(q);
     return 0;
 }
