@@ -6,11 +6,11 @@
 #include <stdatomic.h>
 #include <time.h>
 
-void* enqueueTerm(void* input) {
-    struct Data* data = (struct Data*)input; 
+void *enqueueTerm(void *input) {
+    struct Data *data = (struct Data *)input;
     wQueue *q = data->q;
     char *term = data->term;
-    
+
     size_t len = 0;
     char digest[HASH_LEN] = "";
     len = strlen(term);
@@ -21,20 +21,19 @@ void* enqueueTerm(void* input) {
     enqueue(q, term, len, digest);
 }
 
-void* dequeueTerm(void *input) {
+void *dequeueTerm(void *input) {
     struct Data *data = (struct Data *)input;
     tCell *res = NULL;
     wQueue *q = data->q;
-    while ((q->in_mem + q->not_in_mem) > 0) {
-        if (q->not_in_mem > 0) {
-            readOneTermFromStorageToQueue(q);
-            q->not_in_mem--;
-            q->in_mem++;
-        }
-        res = dequeue(q);
-        free(res->term);
-        free(res);
+    if (q->not_in_mem > 0) {
+        readOneTermFromStorageToQueue(q);
+        q->not_in_mem--;
+        q->in_mem++;
     }
+    res = dequeue(q);
+    free(res->term);
+    free(res);
+    return res;
 }
 
 int main(void) {
@@ -45,7 +44,7 @@ int main(void) {
     pthread_t enqueue;
     pthread_t dequeue;
 
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < 4; i++) {
         char *term = createRandomString(term);
         printf("First:%s\n", term);
         data.q = q;
@@ -56,14 +55,16 @@ int main(void) {
         pthread_join(enqueue, NULL);
     }
 
-    pthread_create(&dequeue, NULL, dequeueTerm, (void *) &data);
-    pthread_join(dequeue, NULL);
+    for (int k = 0; k < 4; k++) {
+        pthread_create(&dequeue, NULL, dequeueTerm, (void *)&data);
+        pthread_join(dequeue, NULL);
+    }
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n\n", q_size(q));
     printAllTermsOfCells(q);
     printf("ENDE\n");
 
-    teardown_queue(q);  //freed den Rest der Queue und die Q selbst!!!
+    teardown_queue(q); // freed den Rest der Queue und die Q selbst!!!
     return 0;
 }
