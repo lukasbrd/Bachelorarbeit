@@ -1,5 +1,6 @@
 #include "hash.h"
 #include <pthread.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -19,7 +20,8 @@ typedef struct Cell {
 typedef struct workQueue {
     tCell *first;
     tCell *last;
-    size_t c;
+    atomic_int in_mem;
+    atomic_int not_in_mem;
     tCell *first_not_in_mem;
 } wQueue;
 

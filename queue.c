@@ -7,19 +7,21 @@ wQueue *init_queue() {
     wQueue *q = (wQueue *)malloc(sizeof(wQueue));
     q->first = NULL;
     q->last = NULL;
-    q->c = 0;
+    q->in_mem = 0;
+    q->not_in_mem = 0;
     q->first_not_in_mem = NULL;
     return q;
 }
 
 void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HASH_LEN]) {
     tCell *new = (tCell *)malloc(sizeof(tCell));
-    q->c++;
-    if (q->c < 3) {
+    if (q->in_mem < 3) {
         new->term = term;
+        q->in_mem++;
     } else {
         free(term);
         new->term = NULL;
+        q->not_in_mem++;
     }
     new->term_length = len;
     new->next = NULL;
@@ -34,7 +36,7 @@ void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HA
         q->last = new;
     }
 
-    if(q->c == 3) {
+    if(q->not_in_mem == 1) {
         q->first_not_in_mem = new;
     }
 
@@ -43,10 +45,10 @@ void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HA
 }
 
 tCell *dequeue(wQueue *const q) {
-    if (q->c == 0) {
+    if ((q->in_mem + q->not_in_mem) == 0) {
         return NULL;
     }
-    q->c--;
+    q->in_mem--;
 
     tCell *res = q->first;
     q->first = q->first->next;
@@ -60,7 +62,12 @@ tCell *dequeue(wQueue *const q) {
 
     void teardown_queue(wQueue * q) {
     tCell *res = NULL;
-    while (q->c != 0) {
+    while ((q->in_mem + q->not_in_mem) > 0) {
+        if (q->not_in_mem > 0) {
+            readOneTermFromStorageToQueue(q);
+            q->not_in_mem--;
+            q->in_mem++;
+        }
         res = dequeue(q);
         free(res->term);
         free(res);
@@ -73,7 +80,7 @@ tCell *dequeue(wQueue *const q) {
     }
 
     size_t q_size(wQueue const *const q) {
-    return q->c;
+    return q->in_mem +q->not_in_mem;
     }
 
     void printAllTermsOfCells(wQueue const *const q) {

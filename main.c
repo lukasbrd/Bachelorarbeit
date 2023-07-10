@@ -3,8 +3,8 @@
 #include "stdio.h"
 #include "string.h"
 #include <pthread.h>
+#include <stdatomic.h>
 #include <time.h>
-
 
 void* enqueueTerm(void* input) {
     struct Data* data = (struct Data*)input; 
@@ -25,9 +25,11 @@ void* dequeueTerm(void *input) {
     struct Data *data = (struct Data *)input;
     tCell *res = NULL;
     wQueue *q = data->q;
-    while (q->c > 0) {
-        if (q->c >= 3) {
+    while ((q->in_mem + q->not_in_mem) > 0) {
+        if (q->not_in_mem > 0) {
             readOneTermFromStorageToQueue(q);
+            q->not_in_mem--;
+            q->in_mem++;
         }
         res = dequeue(q);
         free(res->term);
@@ -38,22 +40,23 @@ void* dequeueTerm(void *input) {
 int main(void) {
     wQueue *q = init_queue();
     srand(time(NULL));
-    char *term = NULL;
-    term = createRandomString(term);
-    printf("First:%s\n",term);
-    struct Data data;
 
-    
-    data.q = q;
-    data.term = term;
-    printf("Second:%s\n",term);
+    struct Data data;
     pthread_t enqueue;
     pthread_t dequeue;
 
-    pthread_create(&enqueue, NULL, enqueueTerm, (void *) &data);
-    pthread_join(enqueue, NULL);
+    for(int i=0; i<4; i++) {
+        char *term = createRandomString(term);
+        printf("First:%s\n", term);
+        data.q = q;
+        data.term = term;
+        printf("Second:%s\n", term);
 
-    pthread_create(&dequeue, NULL, dequeueTerm, (void *)&data);
+        pthread_create(&enqueue, NULL, enqueueTerm, (void *)&data);
+        pthread_join(enqueue, NULL);
+    }
+
+    pthread_create(&dequeue, NULL, dequeueTerm, (void *) &data);
     pthread_join(dequeue, NULL);
 
     printf("\n\n----------------------------------------------------------------\n");
@@ -61,6 +64,6 @@ int main(void) {
     printAllTermsOfCells(q);
     printf("ENDE\n");
 
-    teardown_queue(q);
+    teardown_queue(q);  //freed den Rest der Queue und die Q selbst!!!
     return 0;
 }
