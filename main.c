@@ -10,15 +10,15 @@ void* enqueueTerm(void* input) {
     struct Data* data = (struct Data*)input; 
     wQueue *q = data->q;
     char *term = data->term;
-    /*
+    
     size_t len = 0;
     char digest[HASH_LEN] = "";
     len = strlen(term);
-    hash(term, len, digest);*/
+    hash(term, len, digest);
     printf("Third:%s\n", term);
 
-    //writeToStorage(term, len, digest);
-    //enqueue(q, term, len, digest);
+    writeToStorage(term, len, digest);
+    enqueue(q, term, len, digest);
 }
 
 
@@ -43,7 +43,7 @@ int main(void) {
 
     
     
-/*
+
     while (q->c > 0) {
         if (q->c >= 3) {
             readOneTermFromStorageToQueue(q);
@@ -51,13 +51,12 @@ int main(void) {
         res = dequeue(q);
         free(res->term);
         free(res);
-    }*/
+    }
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n\n", q_size(q));
     printAllTermsOfCells(q);
     printf("ENDE\n");
-    free(term);
 
     teardown_queue(q);
     return 0;
