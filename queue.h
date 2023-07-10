@@ -22,6 +22,7 @@ typedef struct workQueue {
     tCell *first;
     tCell *last;
     atomic_int in_mem;
+    atomic_int not_in_mem;
     atomic_int c;
     tCell *first_not_in_mem;
 } wQueue;

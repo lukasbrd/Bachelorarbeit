@@ -15,12 +15,9 @@ void *enqueueTerm(void *input) {
     char digest[HASH_LEN] = "";
     len = strlen(term);
     hash(term, len, digest);
-    printf("Third:%s\n", term);
-
     writeToStorage(term, len, digest);
     enqueue(q, term, len, digest);
     atomic_fetch_add(&q->c, 1);
-    pthread_exit(NULL);
 }
 
 void *dequeueTerm(void *input) {
@@ -29,9 +26,10 @@ void *dequeueTerm(void *input) {
     wQueue *q = data->q;
     while (1) {
         if (atomic_load(&q->c) > 0) {
-            if (atomic_load(&q->c) - atomic_load(&q->in_mem) > 0) {
+            if (atomic_load(&q->not_in_mem) > 0) {   //Die Subtraktion ist das Problem!!!!
                 readOneTermFromStorageToQueue(q);
                 atomic_fetch_add(&q->in_mem, 1);
+                atomic_fetch_sub(&q->not_in_mem, 1);
             }
             res = dequeue(q);
             atomic_fetch_sub(&q->c, 1);
@@ -52,19 +50,16 @@ int main(void) {
     for (int i = 0; i < 4; i++) {
         char *term = createRandomString(term);
         struct Data data;
-        printf("First:%s\n", term);
+        printf("TermCreated:%s\n", term);
         data.q = q;
         data.term = term;
-        printf("Second:%s\n", term);
 
         pthread_create(&enqueue, NULL, enqueueTerm, (void *)&data);
         pthread_create(&dequeue, NULL, dequeueTerm, (void *)&data);
-        
-        pthread_join(enqueue, NULL);
-        pthread_join(dequeue, NULL);
+
     }
-
-
+    pthread_join(enqueue, NULL);
+    pthread_join(dequeue, NULL);
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n\n", q_size(q));
