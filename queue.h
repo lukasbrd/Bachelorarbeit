@@ -43,4 +43,4 @@ int readAllFromStorageToQueue(wQueue *const q);
 int readOneTermFromStorageToQueue(wQueue *const q);
 void enqueueWithoutTerm(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]);
 void *enqueueTerm(void *input);
-tCell *dequeueTerm(wQueue *const q);
+void *dequeueTerm(void *input);

@@ -21,8 +21,19 @@ void* enqueueTerm(void* input) {
     enqueue(q, term, len, digest);
 }
 
-
-
+void* dequeueTerm(void *input) {
+    struct Data *data = (struct Data *)input;
+    tCell *res = NULL;
+    wQueue *q = data->q;
+    while (q->c > 0) {
+        if (q->c >= 3) {
+            readOneTermFromStorageToQueue(q);
+        }
+        res = dequeue(q);
+        free(res->term);
+        free(res);
+    }
+}
 
 int main(void) {
     wQueue *q = init_queue();
@@ -32,26 +43,18 @@ int main(void) {
     printf("First:%s\n",term);
     struct Data data;
 
-    tCell *res = NULL;
+    
     data.q = q;
     data.term = term;
     printf("Second:%s\n",term);
     pthread_t enqueue;
+    pthread_t dequeue;
 
     pthread_create(&enqueue, NULL, enqueueTerm, (void *) &data);
     pthread_join(enqueue, NULL);
 
-    
-    
-
-    while (q->c > 0) {
-        if (q->c >= 3) {
-            readOneTermFromStorageToQueue(q);
-        }
-        res = dequeue(q);
-        free(res->term);
-        free(res);
-    }
+    pthread_create(&dequeue, NULL, dequeueTerm, (void *)&data);
+    pthread_join(dequeue, NULL);
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n\n", q_size(q));
