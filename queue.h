@@ -11,6 +11,7 @@ typedef struct Cell {
     char digest[HASH_LEN];
     size_t term_length;
     struct Cell *next;
+    pthread_mutex_t mutex;
 } tCell;
 
 // Definition der Queue mit:
@@ -21,7 +22,7 @@ typedef struct workQueue {
     tCell *first;
     tCell *last;
     atomic_int in_mem;
-    atomic_int not_in_mem;
+    atomic_int c;
     tCell *first_not_in_mem;
 } wQueue;
 

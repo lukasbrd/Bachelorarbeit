@@ -8,7 +8,7 @@ wQueue *init_queue() {
     q->first = NULL;
     q->last = NULL;
     q->in_mem = ATOMIC_VAR_INIT(0);
-    q->not_in_mem = ATOMIC_VAR_INIT(0);
+    q->c = ATOMIC_VAR_INIT(0);
     q->first_not_in_mem = NULL;
     return q;
 }
@@ -22,7 +22,6 @@ void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HA
     } else {
         free(term);
         new->term = NULL;
-        atomic_fetch_add(&q->not_in_mem, 1);
         if(firstTermInMem) {
             q->first_not_in_mem = new;
             firstTermInMem = false;
@@ -46,11 +45,9 @@ void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HA
 }
 
 tCell *dequeue(wQueue *const q) {
-    if (atomic_load(&q->in_mem) == 0) {
+    if (atomic_load(&q->c) == 0) {
         return NULL;
     }
-    atomic_fetch_sub(&q->in_mem, 1);
-
     tCell *res = q->first;
     q->first = q->first->next;
 
@@ -61,15 +58,20 @@ tCell *dequeue(wQueue *const q) {
     return res;
     }
 
+
+
+
+
+
     void teardown_queue(wQueue * q) {
     tCell *res = NULL;
-    while ((atomic_load(&q->in_mem) + atomic_load(&q->not_in_mem)) > 0) {
-        if (atomic_load(&q->not_in_mem) > 0) {
+    while ((atomic_load(&q->c)) > 0) {
+        if ((atomic_load(&q->c)-atomic_load(&q->in_mem)) > 0) {
             readOneTermFromStorageToQueue(q);
-            atomic_fetch_sub(&q->not_in_mem, 1);
             atomic_fetch_add(&q->in_mem, 1);
         }
         res = dequeue(q);
+        atomic_fetch_sub(&q->c, 1);
         free(res->term);
         free(res);
     }
@@ -81,7 +83,7 @@ tCell *dequeue(wQueue *const q) {
     }
 
     size_t q_size(wQueue const *const q) {
-    return q->in_mem +q->not_in_mem;
+    return q->c;
     }
 
     void printAllTermsOfCells(wQueue const *const q) {
