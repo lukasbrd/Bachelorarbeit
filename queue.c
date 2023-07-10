@@ -7,21 +7,26 @@ wQueue *init_queue() {
     wQueue *q = (wQueue *)malloc(sizeof(wQueue));
     q->first = NULL;
     q->last = NULL;
-    q->in_mem = 0;
-    q->not_in_mem = 0;
+    q->in_mem = ATOMIC_VAR_INIT(0);
+    q->not_in_mem = ATOMIC_VAR_INIT(0);
     q->first_not_in_mem = NULL;
     return q;
 }
 
 void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HASH_LEN]) {
+    bool firstTermInMem = true;
     tCell *new = (tCell *)malloc(sizeof(tCell));
-    if (q->in_mem < 3) {
+    if (atomic_load(&q->in_mem) < 3) {
         new->term = term;
-        q->in_mem++;
+        atomic_fetch_add(&q->in_mem, 1);
     } else {
         free(term);
         new->term = NULL;
-        q->not_in_mem++;
+        atomic_fetch_add(&q->not_in_mem, 1);
+        if(firstTermInMem) {
+            q->first_not_in_mem = new;
+            firstTermInMem = false;
+        }
     }
     new->term_length = len;
     new->next = NULL;
@@ -36,19 +41,15 @@ void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HA
         q->last = new;
     }
 
-    if(q->not_in_mem == 1) {
-        q->first_not_in_mem = new;
-    }
-
     printf("Length: %ld\n", new->term_length);
     printf("Term: %s\n", new->term);
 }
 
 tCell *dequeue(wQueue *const q) {
-    if ((q->in_mem + q->not_in_mem) == 0) {
+    if (atomic_load(&q->in_mem) == 0) {
         return NULL;
     }
-    q->in_mem--;
+    atomic_fetch_sub(&q->in_mem, 1);
 
     tCell *res = q->first;
     q->first = q->first->next;
@@ -62,11 +63,11 @@ tCell *dequeue(wQueue *const q) {
 
     void teardown_queue(wQueue * q) {
     tCell *res = NULL;
-    while ((q->in_mem + q->not_in_mem) > 0) {
-        if (q->not_in_mem > 0) {
+    while ((atomic_load(&q->in_mem) + atomic_load(&q->not_in_mem)) > 0) {
+        if (atomic_load(&q->not_in_mem) > 0) {
             readOneTermFromStorageToQueue(q);
-            q->not_in_mem--;
-            q->in_mem++;
+            atomic_fetch_sub(&q->not_in_mem, 1);
+            atomic_fetch_add(&q->in_mem, 1);
         }
         res = dequeue(q);
         free(res->term);

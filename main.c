@@ -25,10 +25,10 @@ void *dequeueTerm(void *input) {
     struct Data *data = (struct Data *)input;
     tCell *res = NULL;
     wQueue *q = data->q;
-    if (q->not_in_mem > 0) {
+    if (atomic_load(&q->not_in_mem) > 0) {
         readOneTermFromStorageToQueue(q);
-        q->not_in_mem--;
-        q->in_mem++;
+        atomic_fetch_sub(&q->not_in_mem, 1);
+        atomic_fetch_add(&q->in_mem, 1);
     }
     res = dequeue(q);
     free(res->term);
@@ -40,12 +40,12 @@ int main(void) {
     wQueue *q = init_queue();
     srand(time(NULL));
 
-    struct Data data;
     pthread_t enqueue;
     pthread_t dequeue;
 
     for (int i = 0; i < 4; i++) {
         char *term = createRandomString(term);
+        struct Data data;
         printf("First:%s\n", term);
         data.q = q;
         data.term = term;
@@ -53,9 +53,6 @@ int main(void) {
 
         pthread_create(&enqueue, NULL, enqueueTerm, (void *)&data);
         pthread_join(enqueue, NULL);
-    }
-
-    for (int k = 0; k < 4; k++) {
         pthread_create(&dequeue, NULL, dequeueTerm, (void *)&data);
         pthread_join(dequeue, NULL);
     }
