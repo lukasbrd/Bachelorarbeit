@@ -16,7 +16,6 @@ void* enqueueTerm(void* input) {
     len = strlen(term);
     hash(term, len, digest);*/
     printf("Third:%s\n", term);
-    free(term);
 
     //writeToStorage(term, len, digest);
     //enqueue(q, term, len, digest);
@@ -56,8 +55,9 @@ int main(void) {
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n\n", q_size(q));
-    //printAllTermsOfCells(q);
+    printAllTermsOfCells(q);
     printf("ENDE\n");
+    free(term);
 
     teardown_queue(q);
     return 0;
