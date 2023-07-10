@@ -5,24 +5,46 @@
 #include <pthread.h>
 #include <time.h>
 
+
+void* enqueueTerm(void* input) {
+    struct Data* data = (struct Data*)input; 
+    wQueue *q = data->q;
+    char *term = data->term;
+    /*
+    size_t len = 0;
+    char digest[HASH_LEN] = "";
+    len = strlen(term);
+    hash(term, len, digest);*/
+    printf("Third:%s\n", term);
+    free(term);
+
+    //writeToStorage(term, len, digest);
+    //enqueue(q, term, len, digest);
+}
+
+
+
+
 int main(void) {
     wQueue *q = init_queue();
-    //readAllFromStorageToQueue(q);
     srand(time(NULL));
-    char digest[HASH_LEN] = "";
-    char *term;
-    size_t len = 0;
+    char *term = NULL;
+    term = createRandomString(term);
+    printf("First:%s\n",term);
+    struct Data data;
+
     tCell *res = NULL;
+    data.q = q;
+    data.term = term;
+    printf("Second:%s\n",term);
+    pthread_t enqueue;
 
-    int i;
-    for (i = 0; i < 4; i++) {
-        term = createRandomString(term);
-        len = strlen(term);
-        hash(term, len, digest);
-        writeToStorage(term, len, digest);
-        enqueue(q, term, len, digest);
-    }
+    pthread_create(&enqueue, NULL, enqueueTerm, (void *) &data);
+    pthread_join(enqueue, NULL);
 
+    
+    
+/*
     while (q->c > 0) {
         if (q->c >= 3) {
             readOneTermFromStorageToQueue(q);
@@ -30,11 +52,11 @@ int main(void) {
         res = dequeue(q);
         free(res->term);
         free(res);
-    }
+    }*/
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n\n", q_size(q));
-    printAllTermsOfCells(q);
+    //printAllTermsOfCells(q);
     printf("ENDE\n");
 
     teardown_queue(q);

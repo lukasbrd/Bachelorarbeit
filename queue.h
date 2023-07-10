@@ -23,19 +23,11 @@ typedef struct workQueue {
     tCell *first_not_in_mem;
 } wQueue;
 
-typedef struct {
+typedef struct Data{
     wQueue *q;
-    char *storageTerm;
-    size_t len;
-    char digest[HASH_LEN];
-} StorageData;
+    char *term;
+} data;
 
-typedef struct {
-    wQueue *q;
-    char *queueTerm;
-    size_t len;
-    char digest[HASH_LEN];
-} QueueData;
 
 wQueue *init_queue();
 void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HASH_LEN]);
@@ -50,5 +42,5 @@ int deleteFromStorage(const char digest[HASH_LEN]);
 int readAllFromStorageToQueue(wQueue *const q);
 int readOneTermFromStorageToQueue(wQueue *const q);
 void enqueueWithoutTerm(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]);
-void enqueueTerm(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]);
+void *enqueueTerm(void *input);
 tCell *dequeueTerm(wQueue *const q);
