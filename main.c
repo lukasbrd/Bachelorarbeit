@@ -55,11 +55,12 @@ int main(void) {
         data.term = term;
 
         pthread_create(&enqueue, NULL, enqueueTerm, (void *)&data);
-        pthread_create(&dequeue, NULL, dequeueTerm, (void *)&data);    
+        pthread_create(&dequeue, NULL, dequeueTerm, (void *)&data);
+        pthread_join(enqueue, NULL);
+        pthread_join(dequeue, NULL);
     }
 
-    pthread_join(enqueue, NULL);
-    pthread_join(dequeue, NULL);
+
 
     printf("\n\n----------------------------------------------------------------\n");
     printf("Length of Queue: %lu\n\n", q_size(q));
