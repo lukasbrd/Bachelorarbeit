@@ -5,9 +5,9 @@
 #include <pthread.h>
 #include <time.h>
 
-void enqueueTerm(wQueue *const q, char *const term, const size_t len, const char digest[HASH_LEN]) {
+void enqueueTerm(wQueue *const q, char *const term, const size_t len, char digest[HASH_LEN]) {
     q->c++;
-    writeToStorage(q, term, len, digest);
+    writeToStorage(term, len, digest);
     if (q->c < 3) {
         enqueue(q, term, len, digest);
     } else {
