@@ -17,7 +17,7 @@ wQueue *init_queue() {
 void enqueue(wQueue *const q, char *const term, const size_t len, char digest[HASH_LEN]) {
     bool firstTermInMem = true;
     tCell *new = (tCell *)malloc(sizeof(tCell));
-    if (atomic_load(&q->in_mem) < 3) {
+    if (atomic_load(&q->in_mem) < 2) {
         new->term = term;
         atomic_fetch_add(&q->in_mem, 1);
     } else {

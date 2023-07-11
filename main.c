@@ -26,8 +26,8 @@ void *dequeueTerm(void *input) {
     wQueue *q = data->q;
     while (1) {
         if (atomic_load(&q->c) > 0) {
-            if (atomic_load(&q->not_in_mem) > 0) {   //Die Subtraktion ist das Problem!!!!
-                readOneTermFromStorageToQueue(q);
+            if (atomic_load(&q->not_in_mem) > 0) {   
+                readOneTermFromStorageToQueue(q);      //Hier wird 2x der gleiche Term aufgerufen
                 atomic_fetch_add(&q->in_mem, 1);
                 atomic_fetch_sub(&q->not_in_mem, 1);
             }
@@ -55,9 +55,9 @@ int main(void) {
         data.term = term;
 
         pthread_create(&enqueue, NULL, enqueueTerm, (void *)&data);
-        pthread_create(&dequeue, NULL, dequeueTerm, (void *)&data);
-
+        pthread_create(&dequeue, NULL, dequeueTerm, (void *)&data);    
     }
+
     pthread_join(enqueue, NULL);
     pthread_join(dequeue, NULL);
 
@@ -65,7 +65,8 @@ int main(void) {
     printf("Length of Queue: %lu\n\n", q_size(q));
     printAllTermsOfCells(q);
     printf("ENDE\n");
+    free(q);
 
-    teardown_queue(q); // freed den Rest der Queue und die Q selbst!!!
+    //teardown_queue(q); // freed den Rest der Queue und die Q selbst!!!
     return 0;
 }
