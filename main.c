@@ -12,7 +12,7 @@ typedef struct Cell {
     char digest[HASH_LEN];
 } tCell;
 
-void enqueue(void* pushSocket ,char *term) {
+void enqueue(zsock_t *pushSocket ,char *term) {
     tCell *cell = malloc(sizeof(tCell));
     cell->term = NULL;
     cell->term_length = strlen(term);
@@ -20,16 +20,16 @@ void enqueue(void* pushSocket ,char *term) {
     hash(term, cell->term_length, cell->digest);
 
     // Push the struct to the queue
-    zmq_send(pushSocket, cell, sizeof(tCell), 0);
+    zsock_send(pushSocket,"ip",1, cell);
     writeToStorage(term,cell->term_length,cell->digest);
     free(term);
-    free(cell);
 }
 
-tCell *dequeue(void *pullSocket) {
+tCell *dequeue(zsock_t *pullSocket) {
     // Pull the struct from the queue
-    tCell *receivedCell = malloc(sizeof(tCell));
-    zmq_recv(pullSocket, receivedCell, sizeof(tCell), 0);
+    tCell *receivedCell;
+    int cmd;
+    zsock_recv(pullSocket,"ip",&cmd,&receivedCell);
     receivedCell->term = readOneTermFromStorage(receivedCell->digest);
     return receivedCell;
 }
@@ -37,15 +37,12 @@ tCell *dequeue(void *pullSocket) {
 int main(void) {
     pthread_t thread;
     srand(time(NULL));
-    void *context = zmq_ctx_new();
 
     //bind one socket/longer living one
-    void *pushSocket = zmq_socket(context, ZMQ_PUSH);
-    zmq_bind(pushSocket, "inproc://queue");
+    zsock_t *pushSocket = zsock_new_push("inproc://queue");
 
     //connect the other socket
-    void *pullSocket = zmq_socket(context, ZMQ_PULL);
-    zmq_connect(pullSocket, "inproc://queue");
+    zsock_t *pullSocket = zsock_new_pull("inproc://queue");
 
     char *term = createRandomString();
     printf("TermStart:%s\n",term);
@@ -63,9 +60,8 @@ int main(void) {
     // Cleanup
     free(receivedCell->term);
     free(receivedCell);
-    zmq_close(pushSocket);
-    zmq_close(pullSocket);
-    zmq_ctx_destroy(context);
+    zsock_destroy(&pushSocket);
+    zsock_destroy(&pullSocket);
 
     return 0;
 }
