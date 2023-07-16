@@ -8,25 +8,36 @@ typedef struct Cell {
     char digest[HASH_LEN];
 } tCell;
 
+pthread_t thread;
+
+
+
+
+
+
+
+
+
+
+
+
+
 int main(void) {
-    // Create a ZMQ context
     void *context = zmq_ctx_new();
 
-    // Create a push socket and bind it to an inproc endpoint
+    //bind one socket/longer living one
     void *pushSocket = zmq_socket(context, ZMQ_PUSH);
     zmq_bind(pushSocket, "inproc://queue");
 
-    // Create a pull socket and connect it to the inproc endpoint
+    //connect the other socket
     void *pullSocket = zmq_socket(context, ZMQ_PULL);
     zmq_connect(pullSocket, "inproc://queue");
 
-    // Create a tCell struct and set its values
-    tCell cell;
-    cell.term = "Example Term";
-    cell.term_length = strlen(cell.term)+1;
+    tCell* cell = malloc(sizeof(tCell));
+    cell->term = strdup("Example Term");
+    cell->term_length = strlen(cell->term)+1;
 
-    // Set digest to some predefined value
-    hash(cell.term,cell.term_length, cell.digest);
+    hash(cell->term,cell->term_length, cell->digest);
 
     // Push the struct to the queue
     zmq_send(pushSocket, &cell, sizeof(tCell), 0);
@@ -39,8 +50,11 @@ int main(void) {
     printf("Received struct:\n");
     printf("Term: %s\n", receivedCell.term);
     printf("Term Length: %zu\n", receivedCell.term_length);
+    printf("Term digest: %s\n", receivedCell.digest);
 
     // Cleanup
+    free(cell->term);
+    free(cell);
     zmq_close(pushSocket);
     zmq_close(pullSocket);
     zmq_ctx_destroy(context);
