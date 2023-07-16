@@ -10,6 +10,11 @@ typedef struct Cell {
 } tCell;
 
 
+
+
+
+
+
 int main(void) {
     srand(time(NULL));
     void *context = zmq_ctx_new();
@@ -23,7 +28,9 @@ int main(void) {
     zmq_connect(pullSocket, "inproc://queue");
 
     char *term = createRandomString();
-    printf("Term123:%s\n",term);
+    printf("TermStart:%s\n",term);
+
+
     tCell* cell = malloc(sizeof(tCell));
     cell->term = NULL;
     cell->term_length = strlen(term);
@@ -42,7 +49,7 @@ int main(void) {
     // Print the values of the received struct
     printf("Received struct:\n");
     printf("Term Length: %ld\n", receivedCell->term_length);
-    
+    printf("Term : %s\n", receivedCell->term);
     printf("Term digest: %s\n", receivedCell->digest);
 
     // Cleanup
