@@ -15,6 +15,28 @@ typedef struct Cell {
 
 
 
+
+void enqueue(void* pushSocket ,char *term) {
+    tCell *cell = malloc(sizeof(tCell));
+    cell->term = NULL;
+    cell->term_length = strlen(term);
+
+    hash(term, cell->term_length, cell->digest);
+    cell->digest[HASH_LEN] = '\0';
+
+    // Push the struct to the queue
+    zmq_send(pushSocket, cell, sizeof(tCell), 0);
+    free(term);
+    free(cell);
+}
+
+tCell *dequeue(void *pullSocket) {
+    // Pull the struct from the queue
+    tCell *receivedCell = malloc(sizeof(tCell));
+    zmq_recv(pullSocket, receivedCell, sizeof(tCell), 0);
+    return receivedCell;
+}
+
 int main(void) {
     srand(time(NULL));
     void *context = zmq_ctx_new();
@@ -30,21 +52,10 @@ int main(void) {
     char *term = createRandomString();
     printf("TermStart:%s\n",term);
 
+    enqueue(pushSocket,term);
 
-    tCell* cell = malloc(sizeof(tCell));
-    cell->term = NULL;
-    cell->term_length = strlen(term);
-
-    hash(term,cell->term_length, cell->digest);
-    cell->digest[HASH_LEN] = '\0';
-
-    // Push the struct to the queue
-    zmq_send(pushSocket, cell, sizeof(tCell), 0);
-
-
-    // Pull the struct from the queue
-    tCell* receivedCell = malloc(sizeof(tCell));
-    zmq_recv(pullSocket, receivedCell, sizeof(tCell), 0);
+    tCell *receivedCell;
+    receivedCell = dequeue(pullSocket);
 
     // Print the values of the received struct
     printf("Received struct:\n");
@@ -53,8 +64,6 @@ int main(void) {
     printf("Term digest: %s\n", receivedCell->digest);
 
     // Cleanup
-    free(term);
-    free(cell);
     free(receivedCell);
     zmq_close(pushSocket);
     zmq_close(pullSocket);
