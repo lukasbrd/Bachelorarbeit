@@ -7,8 +7,6 @@
 #define DEQUEUE 2
 #define TERMINATE 3
 
-bool runner = true;
-
 typedef struct Cell {
     char *term;
     size_t term_length;
@@ -16,14 +14,13 @@ typedef struct Cell {
 } tCell;
 
 void *threaddi(void *args) {
-
     zsock_t *commandSocket = zsock_new_pull("inproc://command");
     zsock_t *packageSocket = zsock_new_push("inproc://package");
 
     zsock_t *enqueue = zsock_new_push("inproc://queue");
     zsock_t *dequeue = zsock_new_pull("inproc://queue");
 
-    while (runner) {
+    while (1) {
         int cmd;
         tCell *cell;
         int rc = zsock_recv(commandSocket, "ip", &cmd, &cell);
@@ -69,6 +66,7 @@ tCell *dequeue(zsock_t *command, zsock_t *packageSocket) {
 int main(void) {
     pthread_t thread;
     srand(time(NULL));
+    char digestmain[HASH_LEN+1];
 
     pthread_create(&thread, NULL, threaddi, NULL);
     sleep(3);
@@ -84,20 +82,20 @@ int main(void) {
     tCell *receivedCell;
     receivedCell = dequeue(commandSocket, packageSocket);
 
-    printf("Received struct:\n");
-    printf("receivedTerm Length: %ld\n", receivedCell->term_length);
-    printf("receivedTerm : %s\n", receivedCell->term);
+    printf("receivedTerm: %s\n", receivedCell->term);
+    printf("receivedTermLength: %ld\n", receivedCell->term_length);
+    memcpy(digestmain,receivedCell->digest,HASH_LEN);
+    digestmain[HASH_LEN] = '\0';
+    printf("digest:%s\n",digestmain);
+
 
     free(receivedCell->term);
     free(receivedCell);
 
-    runner = false;
-
     zsock_send(commandSocket, "ip", TERMINATE, NULL);
-
     pthread_join(thread, NULL);
+
     zsock_destroy(&commandSocket);
     zsock_destroy(&packageSocket);
-
     return 0;
 }
