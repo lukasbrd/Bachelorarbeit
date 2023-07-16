@@ -1,43 +1,119 @@
-#include <assert.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <zmq.h>
+#include "queue.h"
+#include "randomService.h"
+#include "stdio.h"
+#include <czmq.h>
+#include <czmq_library.h>
 
-void *send_hello(void *socket) {
-    void *requester = zmq_socket(socket, ZMQ_REQ);
-    zmq_connect(requester, "tcp://localhost:5555");
+pthread_t thread;
 
-    while (1) {
-        sleep(1); // Delay between messages
-        zmq_send(requester, "Hello", 5, 0);
+#define ENQUEUE 1
+#define DEQUEUE 2
+bool runner = true;
+bool loopend = true;
 
-        char buffer[10];
-        zmq_recv(requester, buffer, 10, 0);
-        printf("Received: %s\n", buffer);
+void *threaddi(void *args) {
+    zsock_t *cmd_recv = zsock_new_pull("inproc://example-cmd");
+    zsock_t *package_send = zsock_new_push("inproc://example-package");
+    zsock_t *enqueue = zsock_new_push("inproc://queue");
+    zsock_t *dequeue = zsock_new_pull("inproc://queue");
+
+    while (runner && loopend) {
+        loopend = false;
+        int cmd;
+        tCell *cell;
+
+        int rc = zsock_recv(cmd_recv, "ip", &cmd, &cell);
+        assert(rc == 0);
+
+        printf("2222\n");
+        if (cmd == ENQUEUE) {
+            int rc = zsock_send(enqueue, "p", cell);
+            assert(rc == 0);
+            printf("33333\n");
+        } else if (cmd == DEQUEUE) {
+            tCell *cell2;
+            int rc = zsock_recv(dequeue, "p", &cell2);
+            assert(rc == 0);
+            printf("Term: %s", cell2->term);
+            rc = zsock_send(package_send, "p", cell2);
+            printf("55555\n");
+            assert(rc == 0);
+        }
+        loopend = true;
     }
 
-    zmq_close(requester);
-    return NULL;
+    zsock_destroy(&cmd_recv);
+    zsock_destroy(&package_send);
+    zsock_destroy(&enqueue);
+    zsock_destroy(&dequeue);
 }
 
-int main(void) {
-    //  Socket to talk to clients
-    void *context = zmq_ctx_new();
-    void *responder = zmq_socket(context, ZMQ_REP);
-    int rc = zmq_bind(responder, "tcp://*:5555");
+// main thread
+
+void enqueue(zsock_t *cmd_send, char *term) {
+    tCell *new = (tCell *)malloc(sizeof(tCell));
+    size_t term_length = 0;
+    char digest[HASH_LEN] = "";
+
+    term_length = strlen(term);
+    hash(term, term_length, digest);
+
+    new->term_length = term_length;
+    memcpy(new->digest, digest, HASH_LEN);
+    int rc = zsock_send(cmd_send, "ip", ENQUEUE, new);
     assert(rc == 0);
 
-    pthread_t send_thread;
-    pthread_create(&send_thread, NULL, send_hello, context);
+    printf("Term:%s", term);
+    writeToStorage(term, term_length, digest);
+    free(term);
+    free(new);
+}
 
-    while (1) {
-        char buffer[10];
-        zmq_recv(responder, buffer, 10, 0);
-        printf("Received Hello\n");
-        sleep(1); //  Do some 'work'
-        zmq_send(responder, "World", 5, 0);
+/*
+tCell *dequeue(zsock_t *cmd_send, zsock_t *package_recv, wQueue *const q) {
+    tCell *cell2;
+
+    int rc = zsock_send(cmd_send, "ip", DEQUEUE, NULL);
+    assert(rc == 0);
+    rc = zsock_recv(package_recv, "p", &cell2);
+
+    assert(rc == 0);
+
+    cell2->term = readOneTermFromStorage(cell2->digest);
+    atomic_fetch_sub(&q->length, 1);
+
+    return cell2;
+}*/
+
+int main(void) {
+    pthread_create(&thread, NULL, threaddi, NULL);
+    zsock_t *cmd_send = zsock_new_push("inproc://example-cmd");
+    zsock_t *package_recv = zsock_new_pull("inproc://example-package");
+    char *term = NULL;
+    q->length = ATOMIC_VAR_INIT(0);
+
+    srand(time(NULL));
+
+    int i;
+    for (i = 0; i < 1; i++) {
+        term = createRandomString(term);
+        enqueue(cmd_send, term);
+        printf("11111");
     }
+
+    /*
+        for (i = 0; i < 1; i++) {
+            if (q->length > 0) {
+                tCell *res = dequeue(cmd_send, package_recv, q);
+                free(res->term);
+                free(res);
+                printf("44444");
+            }
+        }*/
+
+    runner = false;
+
+    zsock_destroy(&cmd_send);
+    zsock_destroy(&package_recv);
     return 0;
 }
