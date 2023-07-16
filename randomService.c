@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *createRandomString(char *term) {
+char *createRandomString() {
+    char *term;
     int stringLength;
     stringLength = (rand() % 50) + 1;
     term = (char *) malloc(sizeof(char) * (stringLength+1));
