@@ -5,6 +5,7 @@
 
 #define ENQUEUE 1
 #define DEQUEUE 2
+#define TERMINATE 3
 
 bool runner = true;
 
@@ -34,14 +35,14 @@ void *threaddi(void *args) {
             tCell *receivedCell;
             zsock_recv(dequeue, "p", &receivedCell);
             zsock_send(packageSocket, "p", receivedCell);
+        } else if (cmd == TERMINATE) {
+            zsock_destroy(&commandSocket);
+            zsock_destroy(&packageSocket);
+            zsock_destroy(&enqueue);
+            zsock_destroy(&dequeue);
+            pthread_exit(NULL);
         }
     }
-    zsock_destroy(&commandSocket);
-    zsock_destroy(&packageSocket);
-    zsock_destroy(&enqueue);
-    zsock_destroy(&dequeue);
-
-    return NULL;
 }
 
 void enqueue(zsock_t *commandSocket, char *term) {
@@ -75,26 +76,25 @@ int main(void) {
     zsock_t *commandSocket = zsock_new_push("inproc://command");
     zsock_t *packageSocket = zsock_new_pull("inproc://package");
 
-    for (int i = 0; i < 4; i++) {
-        char *term = createRandomString();
-        printf("TermStart:%s\n", term);
+    char *term = createRandomString();
+    printf("TermStart:%s\n", term);
 
-        enqueue(commandSocket, term);
+    enqueue(commandSocket, term);
 
-        tCell *receivedCell;
-        receivedCell = dequeue(commandSocket, packageSocket);
+    tCell *receivedCell;
+    receivedCell = dequeue(commandSocket, packageSocket);
 
-        printf("Received struct:\n");
-        printf("receivedTerm Length: %ld\n", receivedCell->term_length);
-        printf("receivedTerm : %s\n", receivedCell->term);
+    printf("Received struct:\n");
+    printf("receivedTerm Length: %ld\n", receivedCell->term_length);
+    printf("receivedTerm : %s\n", receivedCell->term);
 
-        free(receivedCell->term);
-        free(receivedCell);
-    }
+    free(receivedCell->term);
+    free(receivedCell);
 
     runner = false;
 
-    pthread_cancel(thread);
+    zsock_send(commandSocket, "ip", TERMINATE, NULL);
+
     pthread_join(thread, NULL);
     zsock_destroy(&commandSocket);
     zsock_destroy(&packageSocket);
