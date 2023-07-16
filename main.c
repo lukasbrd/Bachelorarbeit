@@ -1,119 +1,49 @@
 #include "queue.h"
-#include "randomService.h"
 #include "stdio.h"
 #include <czmq.h>
-#include <czmq_library.h>
 
-pthread_t thread;
-
-#define ENQUEUE 1
-#define DEQUEUE 2
-bool runner = true;
-bool loopend = true;
-
-void *threaddi(void *args) {
-    zsock_t *cmd_recv = zsock_new_pull("inproc://example-cmd");
-    zsock_t *package_send = zsock_new_push("inproc://example-package");
-    zsock_t *enqueue = zsock_new_push("inproc://queue");
-    zsock_t *dequeue = zsock_new_pull("inproc://queue");
-
-    while (runner && loopend) {
-        loopend = false;
-        int cmd;
-        tCell *cell;
-
-        int rc = zsock_recv(cmd_recv, "ip", &cmd, &cell);
-        assert(rc == 0);
-
-        printf("2222\n");
-        if (cmd == ENQUEUE) {
-            int rc = zsock_send(enqueue, "p", cell);
-            assert(rc == 0);
-            printf("33333\n");
-        } else if (cmd == DEQUEUE) {
-            tCell *cell2;
-            int rc = zsock_recv(dequeue, "p", &cell2);
-            assert(rc == 0);
-            printf("Term: %s", cell2->term);
-            rc = zsock_send(package_send, "p", cell2);
-            printf("55555\n");
-            assert(rc == 0);
-        }
-        loopend = true;
-    }
-
-    zsock_destroy(&cmd_recv);
-    zsock_destroy(&package_send);
-    zsock_destroy(&enqueue);
-    zsock_destroy(&dequeue);
-}
-
-// main thread
-
-void enqueue(zsock_t *cmd_send, char *term) {
-    tCell *new = (tCell *)malloc(sizeof(tCell));
-    size_t term_length = 0;
-    char digest[HASH_LEN] = "";
-
-    term_length = strlen(term);
-    hash(term, term_length, digest);
-
-    new->term_length = term_length;
-    memcpy(new->digest, digest, HASH_LEN);
-    int rc = zsock_send(cmd_send, "ip", ENQUEUE, new);
-    assert(rc == 0);
-
-    printf("Term:%s", term);
-    writeToStorage(term, term_length, digest);
-    free(term);
-    free(new);
-}
-
-/*
-tCell *dequeue(zsock_t *cmd_send, zsock_t *package_recv, wQueue *const q) {
-    tCell *cell2;
-
-    int rc = zsock_send(cmd_send, "ip", DEQUEUE, NULL);
-    assert(rc == 0);
-    rc = zsock_recv(package_recv, "p", &cell2);
-
-    assert(rc == 0);
-
-    cell2->term = readOneTermFromStorage(cell2->digest);
-    atomic_fetch_sub(&q->length, 1);
-
-    return cell2;
-}*/
+typedef struct Cell {
+    char *term;
+    size_t term_length;
+    char digest[HASH_LEN];
+} tCell;
 
 int main(void) {
-    pthread_create(&thread, NULL, threaddi, NULL);
-    zsock_t *cmd_send = zsock_new_push("inproc://example-cmd");
-    zsock_t *package_recv = zsock_new_pull("inproc://example-package");
-    char *term = NULL;
-    q->length = ATOMIC_VAR_INIT(0);
+    // Create a ZMQ context
+    void *context = zmq_ctx_new();
 
-    srand(time(NULL));
+    // Create a push socket and bind it to an inproc endpoint
+    void *pushSocket = zmq_socket(context, ZMQ_PUSH);
+    zmq_bind(pushSocket, "inproc://queue");
 
-    int i;
-    for (i = 0; i < 1; i++) {
-        term = createRandomString(term);
-        enqueue(cmd_send, term);
-        printf("11111");
-    }
+    // Create a pull socket and connect it to the inproc endpoint
+    void *pullSocket = zmq_socket(context, ZMQ_PULL);
+    zmq_connect(pullSocket, "inproc://queue");
 
-    /*
-        for (i = 0; i < 1; i++) {
-            if (q->length > 0) {
-                tCell *res = dequeue(cmd_send, package_recv, q);
-                free(res->term);
-                free(res);
-                printf("44444");
-            }
-        }*/
+    // Create a tCell struct and set its values
+    tCell cell;
+    cell.term = "Example Term";
+    cell.term_length = strlen(cell.term)+1;
 
-    runner = false;
+    // Set digest to some predefined value
+    hash(cell.term,cell.term_length, cell.digest);
 
-    zsock_destroy(&cmd_send);
-    zsock_destroy(&package_recv);
+    // Push the struct to the queue
+    zmq_send(pushSocket, &cell, sizeof(tCell), 0);
+
+    // Pull the struct from the queue
+    tCell receivedCell;
+    zmq_recv(pullSocket, &receivedCell, sizeof(tCell), 0);
+
+    // Print the values of the received struct
+    printf("Received struct:\n");
+    printf("Term: %s\n", receivedCell.term);
+    printf("Term Length: %zu\n", receivedCell.term_length);
+
+    // Cleanup
+    zmq_close(pushSocket);
+    zmq_close(pullSocket);
+    zmq_ctx_destroy(context);
+
     return 0;
 }
