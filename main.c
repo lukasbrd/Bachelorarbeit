@@ -3,18 +3,14 @@
 #include <czmq.h>
 #include "randomService.h"
 
+#define ENQUEUE 1
+#define DEQUEUE 2
+
 typedef struct Cell {
     char *term;
     size_t term_length;
-    char digest[HASH_LEN+1];
+    char digest[HASH_LEN];
 } tCell;
-
-
-
-
-
-
-
 
 void enqueue(void* pushSocket ,char *term) {
     tCell *cell = malloc(sizeof(tCell));
@@ -22,10 +18,10 @@ void enqueue(void* pushSocket ,char *term) {
     cell->term_length = strlen(term);
 
     hash(term, cell->term_length, cell->digest);
-    cell->digest[HASH_LEN] = '\0';
 
     // Push the struct to the queue
     zmq_send(pushSocket, cell, sizeof(tCell), 0);
+    writeToStorage(term,cell->term_length,cell->digest);
     free(term);
     free(cell);
 }
@@ -34,10 +30,12 @@ tCell *dequeue(void *pullSocket) {
     // Pull the struct from the queue
     tCell *receivedCell = malloc(sizeof(tCell));
     zmq_recv(pullSocket, receivedCell, sizeof(tCell), 0);
+    receivedCell->term = readOneTermFromStorage(receivedCell->digest);
     return receivedCell;
 }
 
 int main(void) {
+    pthread_t thread;
     srand(time(NULL));
     void *context = zmq_ctx_new();
 
@@ -59,11 +57,11 @@ int main(void) {
 
     // Print the values of the received struct
     printf("Received struct:\n");
-    printf("Term Length: %ld\n", receivedCell->term_length);
-    printf("Term : %s\n", receivedCell->term);
-    printf("Term digest: %s\n", receivedCell->digest);
+    printf("receivedTerm Length: %ld\n", receivedCell->term_length);
+    printf("receivedTerm : %s\n", receivedCell->term);
 
     // Cleanup
+    free(receivedCell->term);
     free(receivedCell);
     zmq_close(pushSocket);
     zmq_close(pullSocket);
