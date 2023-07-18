@@ -3,10 +3,12 @@
 #include "stdio.h"
 #include <czmq.h>
 
+
+
 #define ENQUEUE 1
 #define DEQUEUE 2
 #define TERMINATE 3
-#define inMemory 2
+#define INMEMORY 2
 
 typedef struct Cell {
     char *term;
@@ -30,7 +32,8 @@ void *threaddi(void *args) {
         assert(rc == 0);
 
         if (cmd == ENQUEUE) {
-            if (queueLength > inMemory) {
+            writeToStorage(cell->term, cell->term_length, cell->digest);
+            if (queueLength > INMEMORY) {
                 free(cell->term);
                 cell->term = NULL;
             }
@@ -40,6 +43,9 @@ void *threaddi(void *args) {
         } else if (cmd == DEQUEUE) {
             tCell *receivedCell;
             zsock_recv(dequeue, "p", &receivedCell);
+            if (receivedCell->term == NULL) {
+                receivedCell->term = readOneTermFromStorage(receivedCell->digest);
+            }
             zsock_send(packageSocket, "p", receivedCell);
             queueLength--;
             printf("queueLength2:%d\n", queueLength);
@@ -58,7 +64,6 @@ void enqueue(zsock_t *commandSocket, char *term) {
     cell->term = term;
     cell->term_length = strlen(term);
     hash(term, cell->term_length, cell->digest);
-    writeToStorage(cell->term, cell->term_length, cell->digest);
     zsock_send(commandSocket, "ip", ENQUEUE, cell);
 }
 
@@ -66,10 +71,6 @@ tCell *dequeue(zsock_t *command, zsock_t *packageSocket) {
     tCell *receivedCell;
     zsock_send(command, "ip", DEQUEUE, NULL);
     zsock_recv(packageSocket, "p", &receivedCell);
-
-    if (receivedCell->term == NULL) {
-        receivedCell->term = readOneTermFromStorage(receivedCell->digest);
-    }
     return receivedCell;
 }
 
@@ -105,7 +106,6 @@ int main(void) {
         free(receivedCell);
     }
     
-
     zsock_send(commandSocket, "ip", TERMINATE, NULL);
     pthread_join(thread, NULL);
 

@@ -70,10 +70,8 @@ int deleteFromStorage(const char digest[HASH_LEN]) {
     return 0;
 }*/
 
-
-
 /*
-int readAllFromStorageToQueue(wQueue *const q) {
+int readAllFromStorageToQueue() {
     size_t len;
     char digest[HASH_LEN];
     char buf[28];
@@ -103,3 +101,4 @@ int readAllFromStorageToQueue(wQueue *const q) {
     closedir(dir);
     return 0;
 }*/
+
