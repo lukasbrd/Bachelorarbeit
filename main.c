@@ -13,13 +13,13 @@ bool threadrunning = false;
 
 void *threaddi(void *args) {
     zsock_t *commandSocket = zsock_new_pull("inproc://command");
-    zsock_t *packageSocket = zsock_new_push("inproc://package");
+    zsock_t *packageSocket = zsock_new_push("inproc://package"); // reihenfolge wird nicht erhalten!
     zsock_t *enqueue = zsock_new_push("inproc://queue");
     zsock_t *dequeue = zsock_new_pull("inproc://queue");
     int queueLength = 0;
 
     threadrunning = true;
-    
+
     while (1) {
         int cmd = 0;
         tCell *cell = NULL;
@@ -45,7 +45,7 @@ void *threaddi(void *args) {
                 receivedCell->term = readOneTermFromStorage(receivedCell->digest);
             }
             zsock_send(packageSocket, "p", receivedCell);
-            if(receivedCell != NULL) {
+            if (receivedCell != NULL) {
                 queueLength--;
             }
             printf("queueLength2:%d\n", queueLength);
@@ -83,10 +83,10 @@ int main(void) {
     zsock_t *packageSocket = zsock_new_pull("inproc://package");
 
     pthread_create(&thread, NULL, threaddi, NULL);
-    while (!threadrunning) {}
+    while (!threadrunning) {
+    }
 
     readAllFromStorageToQueue(commandSocket);
-
 
     for (int i = 0; i < 4; i++) {
         char *term = createRandomString();
