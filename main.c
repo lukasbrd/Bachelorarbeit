@@ -6,6 +6,7 @@
 #define ENQUEUE 1
 #define DEQUEUE 2
 #define TERMINATE 3
+#define inMemory 2
 
 typedef struct Cell {
     char *term;
@@ -29,15 +30,19 @@ void *threaddi(void *args) {
         assert(rc == 0);
 
         if (cmd == ENQUEUE) {
-            if (queueLength >= 3) {
+            if (queueLength > inMemory) {
                 free(cell->term);
                 cell->term = NULL;
             }
             zsock_send(enqueue, "p", cell);
+            queueLength++;
+            printf("queueLength1:%d\n",queueLength);
         } else if (cmd == DEQUEUE) {
             tCell *receivedCell;
             zsock_recv(dequeue, "p", &receivedCell);
             zsock_send(packageSocket, "p", receivedCell);
+            queueLength--;
+            printf("queueLength2:%d\n", queueLength);
         } else if (cmd == TERMINATE) {
             zsock_destroy(&commandSocket);
             zsock_destroy(&packageSocket);
@@ -53,8 +58,8 @@ void enqueue(zsock_t *commandSocket, char *term) {
     cell->term = term;
     cell->term_length = strlen(term);
     hash(term, cell->term_length, cell->digest);
-    zsock_send(commandSocket, "ip", ENQUEUE, cell);
     writeToStorage(cell->term, cell->term_length, cell->digest);
+    zsock_send(commandSocket, "ip", ENQUEUE, cell);
 }
 
 tCell *dequeue(zsock_t *command, zsock_t *packageSocket) {
@@ -84,7 +89,9 @@ int main(void) {
         printf("TermStart:%s\n", term);
 
         enqueue(commandSocket, term);
+    }
 
+    for(int k = 0; k < 4; k++) {
         tCell *receivedCell;
         receivedCell = dequeue(commandSocket, packageSocket);
 
@@ -97,6 +104,7 @@ int main(void) {
         free(receivedCell->term);
         free(receivedCell);
     }
+    
 
     zsock_send(commandSocket, "ip", TERMINATE, NULL);
     pthread_join(thread, NULL);
