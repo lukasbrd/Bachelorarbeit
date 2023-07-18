@@ -92,6 +92,13 @@ int main(void) {
     free(receivedCell1->term);
     free(receivedCell1);
 
+    tCell *receivedCell34 = NULL;
+    receivedCell34 = dequeue(commandSocket, packageSocket);
+    if (receivedCell34 != NULL) {
+        free(receivedCell34->term);
+        free(receivedCell34);
+    }
+
     for (int i = 0; i < 4; i++) {
         char *term = createRandomString();
         printf("TermStart:%s\n", term);
