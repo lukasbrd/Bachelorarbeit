@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #define ENQUEUE 1
-#define NOPERSIST 2
+#define READFROMSTORAGE 2
 #define DEQUEUE 3
 #define TERMINATE 4
 

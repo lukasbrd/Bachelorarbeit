@@ -16,18 +16,17 @@ void *threaddi(void *args) {
     zsock_t *packageSocket = zsock_new_push("inproc://package");
     zsock_t *enqueue = zsock_new_push("inproc://queue");
     zsock_t *dequeue = zsock_new_pull("inproc://queue");
-
-    threadrunning = true;
-
     int queueLength = 0;
 
+    threadrunning = true;
+    
     while (1) {
         int cmd = 0;
         tCell *cell = NULL;
         int rc = zsock_recv(commandSocket, "ip", &cmd, &cell);
         assert(rc == 0);
 
-        if (cmd == ENQUEUE || cmd == NOPERSIST) {
+        if (cmd == ENQUEUE || cmd == READFROMSTORAGE) {
             queueLength++;
             if (cmd == ENQUEUE) {
                 writeToStorage(cell->term, cell->term_length, cell->digest);
@@ -39,7 +38,6 @@ void *threaddi(void *args) {
             zsock_send(enqueue, "p", cell);
             printf("queueLength1:%d\n", queueLength);
         } else if (cmd == DEQUEUE) {
-            queueLength--;
             tCell *receivedCell = NULL;
             zsock_set_rcvtimeo(dequeue, 200);
             int rc = zsock_recv(dequeue, "p", &receivedCell);
@@ -47,6 +45,9 @@ void *threaddi(void *args) {
                 receivedCell->term = readOneTermFromStorage(receivedCell->digest);
             }
             zsock_send(packageSocket, "p", receivedCell);
+            if(receivedCell != NULL) {
+                queueLength--;
+            }
             printf("queueLength2:%d\n", queueLength);
         } else if (cmd == TERMINATE) {
             zsock_destroy(&commandSocket);
@@ -82,15 +83,18 @@ int main(void) {
     zsock_t *packageSocket = zsock_new_pull("inproc://package");
 
     pthread_create(&thread, NULL, threaddi, NULL);
-    while (!threadrunning) {
-    }
+    while (!threadrunning) {}
 
     readAllFromStorageToQueue(commandSocket);
+
+    tCell *receivedCell1 = NULL;
+    receivedCell1 = dequeue(commandSocket, packageSocket);
+    free(receivedCell1->term);
+    free(receivedCell1);
 
     for (int i = 0; i < 4; i++) {
         char *term = createRandomString();
         printf("TermStart:%s\n", term);
-
         enqueue(commandSocket, term, ENQUEUE);
     }
 

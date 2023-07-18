@@ -90,7 +90,7 @@ int readAllFromStorageToQueue(zsock_t *command) {
                 char *term = (char *)malloc(sizeof(char) * (len + 1));
                 term[len] = '\0';
                 read(fd, term, len);
-                enqueue(command,term,NOPERSIST);
+                enqueue(command,term,READFROMSTORAGE);
                 close(fd);
             }
         }
