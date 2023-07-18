@@ -52,6 +52,7 @@ char *readOneTermFromStorage(const char digest[HASH_LEN]) {
     term = (char *)malloc(sizeof(char) * (len + 1));
     read(fd, term, len);
     term[len] = '\0';
+    printf("readOneFromStorage: %s\n", term);
 
     close(fd);
     return term;

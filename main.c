@@ -66,7 +66,7 @@ tCell *dequeue(zsock_t *command, zsock_t *packageSocket) {
 int main(void) {
     pthread_t thread;
     srand(time(NULL));
-    char digestmain[HASH_LEN+1];
+    char digestmain[HASH_LEN + 1];
 
     pthread_create(&thread, NULL, threaddi, NULL);
     sleep(3);
@@ -74,23 +74,24 @@ int main(void) {
     zsock_t *commandSocket = zsock_new_push("inproc://command");
     zsock_t *packageSocket = zsock_new_pull("inproc://package");
 
-    char *term = createRandomString();
-    printf("TermStart:%s\n", term);
+    for (int i = 0; i < 4; i++) {
+        char *term = createRandomString();
+        printf("TermStart:%s\n", term);
 
-    enqueue(commandSocket, term);
+        enqueue(commandSocket, term);
 
-    tCell *receivedCell;
-    receivedCell = dequeue(commandSocket, packageSocket);
+        tCell *receivedCell;
+        receivedCell = dequeue(commandSocket, packageSocket);
 
-    printf("receivedTerm: %s\n", receivedCell->term);
-    printf("receivedTermLength: %ld\n", receivedCell->term_length);
-    memcpy(digestmain,receivedCell->digest,HASH_LEN);
-    digestmain[HASH_LEN] = '\0';
-    printf("digest:%s\n",digestmain);
+        printf("receivedTerm: %s\n", receivedCell->term);
+        printf("receivedTermLength: %ld\n", receivedCell->term_length);
+        memcpy(digestmain, receivedCell->digest, HASH_LEN);
+        digestmain[HASH_LEN] = '\0';
+        printf("digest:%s\n", digestmain);
 
-
-    free(receivedCell->term);
-    free(receivedCell);
+        free(receivedCell->term);
+        free(receivedCell);
+    }
 
     zsock_send(commandSocket, "ip", TERMINATE, NULL);
     pthread_join(thread, NULL);
