@@ -87,17 +87,6 @@ int main(void) {
 
     readAllFromStorageToQueue(commandSocket);
 
-    tCell *receivedCell1 = NULL;
-    receivedCell1 = dequeue(commandSocket, packageSocket);
-    free(receivedCell1->term);
-    free(receivedCell1);
-
-    tCell *receivedCell34 = NULL;
-    receivedCell34 = dequeue(commandSocket, packageSocket);
-    if (receivedCell34 != NULL) {
-        free(receivedCell34->term);
-        free(receivedCell34);
-    }
 
     for (int i = 0; i < 4; i++) {
         char *term = createRandomString();
