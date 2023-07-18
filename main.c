@@ -26,8 +26,8 @@ void *threaddi(void *args) {
     int queueLength = 0;
 
     while (1) {
-        int cmd;
-        tCell *cell;
+        int cmd = 0;
+        tCell *cell = NULL;
         int rc = zsock_recv(commandSocket, "ip", &cmd, &cell);
         assert(rc == 0);
 
@@ -41,9 +41,10 @@ void *threaddi(void *args) {
             queueLength++;
             printf("queueLength1:%d\n",queueLength);
         } else if (cmd == DEQUEUE) {
-            tCell *receivedCell;
-            zsock_recv(dequeue, "p", &receivedCell);
-            if (receivedCell->term == NULL) {
+            tCell *receivedCell = NULL;
+            zsock_set_rcvtimeo(dequeue, 200);
+            int rc = zsock_recv(dequeue, "p", &receivedCell);
+            if (rc == 0 && receivedCell->term == NULL) {
                 receivedCell->term = readOneTermFromStorage(receivedCell->digest);
             }
             zsock_send(packageSocket, "p", receivedCell);
@@ -68,9 +69,10 @@ void enqueue(zsock_t *commandSocket, char *term) {
 }
 
 tCell *dequeue(zsock_t *command, zsock_t *packageSocket) {
-    tCell *receivedCell;
+    tCell *receivedCell = NULL;
     zsock_send(command, "ip", DEQUEUE, NULL);
-    zsock_recv(packageSocket, "p", &receivedCell);
+    zsock_set_rcvtimeo(packageSocket, 200);
+    int rc = zsock_recv(packageSocket, "p", &receivedCell);
     return receivedCell;
 }
 
@@ -80,7 +82,7 @@ int main(void) {
     char digestmain[HASH_LEN + 1];
 
     pthread_create(&thread, NULL, threaddi, NULL);
-    sleep(3);
+    sleep(2);
 
     zsock_t *commandSocket = zsock_new_push("inproc://command");
     zsock_t *packageSocket = zsock_new_pull("inproc://package");
@@ -92,10 +94,13 @@ int main(void) {
         enqueue(commandSocket, term);
     }
 
-    for(int k = 0; k < 4; k++) {
-        tCell *receivedCell;
-        receivedCell = dequeue(commandSocket, packageSocket);
 
+    tCell *receivedCell = NULL;
+    while(1) {
+        receivedCell = dequeue(commandSocket, packageSocket);
+        if(receivedCell == NULL) {
+            break;
+        }
         printf("receivedTerm: %s\n", receivedCell->term);
         printf("receivedTermLength: %ld\n", receivedCell->term_length);
         memcpy(digestmain, receivedCell->digest, HASH_LEN);
