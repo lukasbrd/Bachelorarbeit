@@ -51,10 +51,13 @@ void enqueue(zsock_t *commandSocket, char *term, int cmd, wQueue *q) {
 }
 
 tCell *dequeue(zsock_t *command, zsock_t *packageSocket, wQueue *q) {
+    if(q->qlength == 0) {
+        return NULL;
+    }
     tCell *receivedCell = NULL;
     zsock_send(command, "ip", DEQUEUE, NULL);
     int rc = zsock_recv(packageSocket, "p", &receivedCell);
-    if (rc == 0 && receivedCell != NULL && receivedCell->term == NULL) {
+    if (rc == 0 && receivedCell->term == NULL) {
         receivedCell->term = readOneTermFromStorage(receivedCell->digest);
     }
     (q->qlength)--;
@@ -71,11 +74,10 @@ int main(void) {
     zsock_t *packageSocket = zsock_new_pull("inproc://package");
 
     pthread_create(&thread, NULL, threaddi, (void *)q);
-
     while (!threadrunning) {
     }
 
-    //readAllFromStorageToQueue(commandSocket, q);
+    readAllFromStorageToQueue(commandSocket, q);
 
     char digestmain2[HASH_LEN + 1];
     if(q->qlength >0) {
@@ -97,7 +99,6 @@ int main(void) {
     }
 
     char digestmain[HASH_LEN + 1];
-
     while (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = dequeue(commandSocket, packageSocket, q);

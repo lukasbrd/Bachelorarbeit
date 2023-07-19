@@ -24,9 +24,6 @@ void enqueueMem(wQueue *const q, tCell *cell) {
 }
 
 tCell *dequeueMem(wQueue *const q) {
-    if(q->first == NULL) {
-        return NULL;
-    }
     tCell *res = q->first;
     q->first = q->first->next;
 
