@@ -10,7 +10,7 @@ void *threaddi(void *args) {
     zsock_t *packageSocket = zsock_new_push("inproc://package");
 
     threadrunning = true;
-    wQueue *q = init_queue();
+    wQueue *q = (wQueue *)args;
 
     while (1) {
         int cmd = 0;
@@ -19,7 +19,7 @@ void *threaddi(void *args) {
         assert(rc == 0);
 
         if (cmd == ENQUEUE || cmd == READFROMSTORAGE) {
-            enqueueMem(q,cell);
+            enqueueMem(q, cell);
         } else if (cmd == DEQUEUE) {
             tCell *receivedCell = NULL;
             receivedCell = dequeueMem(q);
@@ -27,62 +27,60 @@ void *threaddi(void *args) {
         } else if (cmd == TERMINATE) {
             zsock_destroy(&commandSocket);
             zsock_destroy(&packageSocket);
-            free(q);
             pthread_exit(0);
         }
     }
 }
 
-void enqueue(zsock_t *commandSocket, char *term, int cmd, int *queueLength) {
+void enqueue(zsock_t *commandSocket, char *term, int cmd, wQueue *q) {
     tCell *cell = malloc(sizeof(tCell));
-
     cell->term = term;
     cell->term_length = strlen(term);
     hash(term, cell->term_length, cell->digest);
     cell->next = NULL;
-
     if (cmd == ENQUEUE) {
         writeToStorage(cell->term, cell->term_length, cell->digest);
     }
-    if (*queueLength > INMEMORY) {
+    if (q->qlength > INMEMORY) {
         cell->term = NULL;
         free(term);
     }
     zsock_send(commandSocket, "ip", cmd, cell);
-    (*queueLength)++;
-    printf("EnqueueLength: %d\n",*queueLength);
+    (q->qlength)++;
+    printf("EnqueueLength: %d\n", q->qlength);
 }
 
-tCell *dequeue(zsock_t *command, zsock_t *packageSocket, int *queueLength) {
+tCell *dequeue(zsock_t *command, zsock_t *packageSocket, wQueue *q) {
     tCell *receivedCell = NULL;
     zsock_send(command, "ip", DEQUEUE, NULL);
     int rc = zsock_recv(packageSocket, "p", &receivedCell);
-    if (rc == 0 && receivedCell->term == NULL) {
+    if (rc == 0 && receivedCell != NULL && receivedCell->term == NULL) {
         receivedCell->term = readOneTermFromStorage(receivedCell->digest);
     }
-    (*queueLength)--;
-    printf("DequeueLength: %d\n", *queueLength);
+    (q->qlength)--;
+    printf("DequeueLength: %d\n", q->qlength);
     return receivedCell;
 }
 
 int main(void) {
     pthread_t thread;
     srand(time(NULL));
-    int queueLength = 0;
+    wQueue *q = init_queue();
 
     zsock_t *commandSocket = zsock_new_push("inproc://command");
     zsock_t *packageSocket = zsock_new_pull("inproc://package");
 
-    pthread_create(&thread, NULL, threaddi, NULL);
+    pthread_create(&thread, NULL, threaddi, (void *)q);
+
     while (!threadrunning) {
     }
 
-    readAllFromStorageToQueue(commandSocket, &queueLength);
+    //readAllFromStorageToQueue(commandSocket, q);
 
     char digestmain2[HASH_LEN + 1];
-    for(int i=0; i < 3; i++) {
+    if(q->qlength >0) {
         tCell *receivedCell = NULL;
-        receivedCell = dequeue(commandSocket, packageSocket, &queueLength);
+        receivedCell = dequeue(commandSocket, packageSocket, q);
         printf("receivedTerm: %s\n", receivedCell->term);
         printf("receivedTermLength: %ld\n", receivedCell->term_length);
         memcpy(digestmain2, receivedCell->digest, HASH_LEN);
@@ -90,19 +88,19 @@ int main(void) {
         printf("digest:%s\n", digestmain2);
         free(receivedCell->term);
         free(receivedCell);
-    }
-
+    } 
+    
     for (int i = 0; i < 2; i++) {
         char *term = createRandomString();
         printf("TermStart:%s\n", term);
-        enqueue(commandSocket, term, ENQUEUE, &queueLength);
+        enqueue(commandSocket, term, ENQUEUE, q);
     }
 
     char digestmain[HASH_LEN + 1];
-    
-    while (queueLength > 0) {
+
+    while (q->qlength > 0) {
         tCell *receivedCell = NULL;
-        receivedCell = dequeue(commandSocket, packageSocket, &queueLength);
+        receivedCell = dequeue(commandSocket, packageSocket, q);
         printf("receivedTerm: %s\n", receivedCell->term);
         printf("receivedTermLength: %ld\n", receivedCell->term_length);
         memcpy(digestmain, receivedCell->digest, HASH_LEN);
@@ -117,5 +115,6 @@ int main(void) {
 
     zsock_destroy(&commandSocket);
     zsock_destroy(&packageSocket);
+    free(q);
     return 0;
 }

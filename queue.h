@@ -23,6 +23,7 @@ typedef struct Cell {
 typedef struct workQueue {
     tCell *first;
     tCell *last;
+    int qlength;
 } wQueue;
 
 wQueue *init_queue();
@@ -30,11 +31,10 @@ char *readOneTermFromStorage(const char digest[HASH_LEN]);
 int deleteFromStorage(const char digest[HASH_LEN]);
 int writeToStorage(char *const term, const size_t len, const char digest[HASH_LEN]);
 
+int readAllFromStorageToQueue(zsock_t *command, wQueue *const q);
 
-int readAllFromStorageToQueue(zsock_t *command, int *queueLength);
+void enqueue(zsock_t *commandSocket, char *term, int cmd, wQueue *const q);
+tCell *dequeue(zsock_t *command, zsock_t *packageSocket, wQueue *const q);
 
-void enqueue(zsock_t *commandSocket, char *term, int cmd, int *queueLength);
-tCell *dequeue(zsock_t *command, zsock_t *packageSocket, int *queueLength);
-
-    tCell *dequeueMem(wQueue *const q);
+tCell *dequeueMem(wQueue *const q);
 void enqueueMem(wQueue *const q, tCell *cell);

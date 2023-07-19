@@ -7,6 +7,7 @@ wQueue *init_queue() {
     wQueue *q = (wQueue *)malloc(sizeof(wQueue));
     q->first = NULL;
     q->last = NULL;
+    q->qlength = 0;
     return q;
 }
 
@@ -23,6 +24,9 @@ void enqueueMem(wQueue *const q, tCell *cell) {
 }
 
 tCell *dequeueMem(wQueue *const q) {
+    if(q->first == NULL) {
+        return NULL;
+    }
     tCell *res = q->first;
     q->first = q->first->next;
 

@@ -70,7 +70,7 @@ int deleteFromStorage(const char digest[HASH_LEN]) {
     return 0;
 }*/
 
-int readAllFromStorageToQueue(zsock_t *command,int *queueLength) {
+int readAllFromStorageToQueue(zsock_t *command, wQueue *const q) {
     size_t len;
     char digest[HASH_LEN];
     char buf[28];
@@ -90,7 +90,7 @@ int readAllFromStorageToQueue(zsock_t *command,int *queueLength) {
                 char *term = (char *)malloc(sizeof(char) * (len + 1));
                 term[len] = '\0';
                 read(fd, term, len);
-                enqueue(command, term, READFROMSTORAGE, queueLength);
+                enqueue(command, term, READFROMSTORAGE, q);
                 close(fd);
             }
         }
