@@ -79,8 +79,20 @@ int main(void) {
 
     readAllFromStorageToQueue(commandSocket, &queueLength);
 
-    
-    for (int i = 0; i < 4; i++) {
+    char digestmain2[HASH_LEN + 1];
+    for(int i=0; i < 3; i++) {
+        tCell *receivedCell = NULL;
+        receivedCell = dequeue(commandSocket, packageSocket, &queueLength);
+        printf("receivedTerm: %s\n", receivedCell->term);
+        printf("receivedTermLength: %ld\n", receivedCell->term_length);
+        memcpy(digestmain2, receivedCell->digest, HASH_LEN);
+        digestmain2[HASH_LEN] = '\0';
+        printf("digest:%s\n", digestmain2);
+        free(receivedCell->term);
+        free(receivedCell);
+    }
+
+    for (int i = 0; i < 2; i++) {
         char *term = createRandomString();
         printf("TermStart:%s\n", term);
         enqueue(commandSocket, term, ENQUEUE, &queueLength);
