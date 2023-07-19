@@ -11,6 +11,15 @@ wQueue *init_queue() {
     return q;
 }
 
+tCell *init_cell(char *term) {
+    tCell *cell = malloc(sizeof(tCell));
+    cell->term = term;
+    cell->term_length = strlen(term);
+    hash(term, cell->term_length, cell->digest);
+    cell->next = NULL;
+    return cell;
+}
+
 void enqueueMem(wQueue *const q, tCell *cell) {
     if (q->first == NULL) {
         q->first = cell;
@@ -41,10 +50,20 @@ int is_empty(wQueue const *const q) {
 
 void printAllTermsOfCells(wQueue const *const q) {
     tCell *tmp = q->first;
-
     while (tmp != NULL) {
         printf("Length: %ld\n", tmp->term_length);
         printf("Text: %s\n", tmp->term);
         tmp = tmp->next;
     }
+}
+
+void printCell(tCell *cell) {
+    char digestmain[HASH_LEN + 1];
+    printf("receivedTerm: %s\n", cell->term);
+    printf("receivedTermLength: %ld\n", cell->term_length);
+    memcpy(digestmain, cell->digest, HASH_LEN);
+    digestmain[HASH_LEN] = '\0';
+    printf("digest:%s\n", digestmain);
+    free(cell->term);
+    free(cell);
 }

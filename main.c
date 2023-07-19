@@ -4,12 +4,18 @@
 #include <czmq.h>
 
 volatile bool threadrunning = false;
+pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void *threaddi(void *args) {
     zsock_t *commandSocket = zsock_new_pull("inproc://command");
     zsock_t *packageSocket = zsock_new_push("inproc://package");
 
+    pthread_mutex_lock(&mutex);
     threadrunning = true;
+    pthread_cond_broadcast(&condition);
+    pthread_mutex_unlock(&mutex);
+
     wQueue *q = (wQueue *)args;
 
     while (1) {
@@ -33,11 +39,7 @@ void *threaddi(void *args) {
 }
 
 void enqueue(zsock_t *commandSocket, char *term, int cmd, wQueue *q) {
-    tCell *cell = malloc(sizeof(tCell));
-    cell->term = term;
-    cell->term_length = strlen(term);
-    hash(term, cell->term_length, cell->digest);
-    cell->next = NULL;
+    tCell *cell = init_cell(term);
     if (cmd == ENQUEUE) {
         writeToStorage(cell->term, cell->term_length, cell->digest);
     }
@@ -65,28 +67,21 @@ tCell *dequeue(zsock_t *command, zsock_t *packageSocket, wQueue *q) {
     return receivedCell;
 }
 
-void printCell(tCell *cell) {
-    char digestmain[HASH_LEN + 1];
-    printf("receivedTerm: %s\n", cell->term);
-    printf("receivedTermLength: %ld\n", cell->term_length);
-    memcpy(digestmain, cell->digest, HASH_LEN);
-    digestmain[HASH_LEN] = '\0';
-    printf("digest:%s\n", digestmain);
-    free(cell->term);
-    free(cell);
-}
-
 int main(void) {
-    pthread_t thread;
     srand(time(NULL));
-    wQueue *q = init_queue();
-
     zsock_t *commandSocket = zsock_new_push("inproc://command");
     zsock_t *packageSocket = zsock_new_pull("inproc://package");
 
+    wQueue *q = init_queue();
+
+    pthread_t thread;
     pthread_create(&thread, NULL, threaddi, (void *)q);
+
+    pthread_mutex_lock(&mutex);
     while (!threadrunning) {
+        pthread_cond_wait(&condition, &mutex);
     }
+    pthread_mutex_unlock(&mutex);
 
     readAllFromStorageToQueue(commandSocket, q);
 
@@ -102,7 +97,7 @@ int main(void) {
         enqueue(commandSocket, term, ENQUEUE, q);
     }
 
-        while (q->qlength > 0) {
+    while (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = dequeue(commandSocket, packageSocket, q);
         printCell(receivedCell);
