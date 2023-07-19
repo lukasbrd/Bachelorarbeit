@@ -51,7 +51,7 @@ void enqueue(zsock_t *commandSocket, char *term, int cmd, wQueue *q) {
 }
 
 tCell *dequeue(zsock_t *command, zsock_t *packageSocket, wQueue *q) {
-    if(q->qlength == 0) {
+    if (q->qlength == 0) {
         return NULL;
     }
     tCell *receivedCell = NULL;
@@ -63,6 +63,17 @@ tCell *dequeue(zsock_t *command, zsock_t *packageSocket, wQueue *q) {
     (q->qlength)--;
     printf("DequeueLength: %d\n", q->qlength);
     return receivedCell;
+}
+
+void printCell(tCell *cell) {
+    char digestmain[HASH_LEN + 1];
+    printf("receivedTerm: %s\n", cell->term);
+    printf("receivedTermLength: %ld\n", cell->term_length);
+    memcpy(digestmain, cell->digest, HASH_LEN);
+    digestmain[HASH_LEN] = '\0';
+    printf("digest:%s\n", digestmain);
+    free(cell->term);
+    free(cell);
 }
 
 int main(void) {
@@ -79,36 +90,22 @@ int main(void) {
 
     readAllFromStorageToQueue(commandSocket, q);
 
-    char digestmain2[HASH_LEN + 1];
-    if(q->qlength >0) {
+    if (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = dequeue(commandSocket, packageSocket, q);
-        printf("receivedTerm: %s\n", receivedCell->term);
-        printf("receivedTermLength: %ld\n", receivedCell->term_length);
-        memcpy(digestmain2, receivedCell->digest, HASH_LEN);
-        digestmain2[HASH_LEN] = '\0';
-        printf("digest:%s\n", digestmain2);
-        free(receivedCell->term);
-        free(receivedCell);
-    } 
-    
+        printCell(receivedCell);
+    }
+
     for (int i = 0; i < 2; i++) {
         char *term = createRandomString();
         printf("TermStart:%s\n", term);
         enqueue(commandSocket, term, ENQUEUE, q);
     }
 
-    char digestmain[HASH_LEN + 1];
-    while (q->qlength > 0) {
+        while (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = dequeue(commandSocket, packageSocket, q);
-        printf("receivedTerm: %s\n", receivedCell->term);
-        printf("receivedTermLength: %ld\n", receivedCell->term_length);
-        memcpy(digestmain, receivedCell->digest, HASH_LEN);
-        digestmain[HASH_LEN] = '\0';
-        printf("digest:%s\n", digestmain);
-        free(receivedCell->term);
-        free(receivedCell);
+        printCell(receivedCell);
     }
 
     zsock_send(commandSocket, "ip", TERMINATE, NULL);
