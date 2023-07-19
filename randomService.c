@@ -10,7 +10,7 @@ char *createRandomString() {
 
     int i;
     for (i = 0; i < stringLength; i++) {
-        term[i] = (char)(rand() % ('Z' - 'A')) + 'A';
+        term[i] = (char)(rand() % ('Z' - 'A' + 1)) + 'A';
     }
     term[i] = '\0';
     return term;
