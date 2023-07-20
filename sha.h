@@ -1,6 +1,8 @@
 /* 
  * $Id: sha.h,v 1.1 2002/01/28 11:03:44 mishan Exp $
  */
+#ifndef SHA_H
+#define SHA_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -28,3 +30,4 @@ extern void sha_copy(struct sha_ctx *dest, struct sha_ctx *src);
 extern int sha_fd(int fd, size_t maxlen, uint8_t *s);
 extern void sha1(char *input, int len, char *digest);
 
+#endif

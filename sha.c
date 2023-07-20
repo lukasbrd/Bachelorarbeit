@@ -31,6 +31,7 @@ SHA or whether it's simply a bandaid which fixes the problem with a minimum of
 effort (for example the reengineering of a great many Capstone chips).
 */
 
+
 #if defined(HAVE_CONFIG_H)
 #include "config.h"
 #endif

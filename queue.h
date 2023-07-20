@@ -6,12 +6,11 @@
 #include <stdlib.h>
 
 #define ENQUEUE 1
-#define READFROMSTORAGE 2
+#define RESTORED 2
 #define DEQUEUE 3
 #define TERMINATE 4
 
 #define INMEMORY 6
-
 
 typedef struct Cell {
     char *term;
@@ -28,12 +27,15 @@ typedef struct workQueue {
 
 wQueue *init_queue();
 tCell *init_cell(char *term);
+
+void sendAndPersist(zsock_t *commandSocket, char *term, int cmd, wQueue *const q);
+tCell *receiveAndRestore(zsock_t *command, zsock_t *packageSocket, wQueue *const q);
+tCell *dequeue(wQueue *const q);
+void enqueue(wQueue *const q, tCell *cell);
+
+int readAllFromStorageToQueue(zsock_t *command, wQueue *const q);
 char *readOneTermFromStorage(const char digest[HASH_LEN]);
 int deleteFromStorage(const char digest[HASH_LEN]);
 int writeToStorage(char *const term, const size_t len, const char digest[HASH_LEN]);
-int readAllFromStorageToQueue(zsock_t *command, wQueue *const q);
-void enqueue(zsock_t *commandSocket, char *term, int cmd, wQueue *const q);
-tCell *dequeue(zsock_t *command, zsock_t *packageSocket, wQueue *const q);
-tCell *dequeueMem(wQueue *const q);
-void enqueueMem(wQueue *const q, tCell *cell);
+
 void printCell(tCell *cell);

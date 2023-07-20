@@ -16,8 +16,8 @@ int writeToStorage(char *const term, const size_t len, const char digest[HASH_LE
     strcat(dir, readableHash);
 
     if ((fd = open(dir, O_RDWR | O_CREAT | O_TRUNC, 00600)) == -1) {
-        perror("Cannot open output file\n");
-        exit(1);
+        fprintf(stderr, "Error opening file '%s': %s\n", dir, strerror(errno));
+        return 1;
     }
 
     char buf[28 + len];
@@ -43,7 +43,7 @@ char *readOneTermFromStorage(const char digest[HASH_LEN]) {
     strcat(dir, readableHash);
 
     if ((fd = open(dir, O_RDWR, 00600)) == -1) {
-        perror("Cannot open output file\n");
+        fprintf(stderr, "Error opening file '%s': %s\n", dir, strerror(errno));
         exit(1);
     }
 
@@ -58,7 +58,7 @@ char *readOneTermFromStorage(const char digest[HASH_LEN]) {
     return term;
 }
 
-/*
+
 int deleteFromStorage(const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
@@ -68,7 +68,7 @@ int deleteFromStorage(const char digest[HASH_LEN]) {
 
     int del = remove(dir);
     return 0;
-}*/
+}
 
 int readAllFromStorageToQueue(zsock_t *command, wQueue *const q) {
     size_t len;
@@ -90,12 +90,12 @@ int readAllFromStorageToQueue(zsock_t *command, wQueue *const q) {
                 char *term = (char *)malloc(sizeof(char) * (len + 1));
                 term[len] = '\0';
                 read(fd, term, len);
-                enqueue(command, term, READFROMSTORAGE, q);
+                sendAndPersist(command, term, RESTORED, q);
                 close(fd);
             }
         }
     } else {
-        perror("Couldn't open the directory");
+        fprintf(stderr, "Error opening directory '%s': %s\n", dir, strerror(errno));
     }
     closedir(dir);
     return 0;

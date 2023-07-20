@@ -1,5 +1,4 @@
 #include "queue.h"
-#include "hash.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -20,7 +19,7 @@ tCell *init_cell(char *term) {
     return cell;
 }
 
-void enqueueMem(wQueue *const q, tCell *cell) {
+void enqueue(wQueue *const q, tCell *cell) {
     if (q->first == NULL) {
         q->first = cell;
         q->last = cell;
@@ -32,10 +31,9 @@ void enqueueMem(wQueue *const q, tCell *cell) {
     }
 }
 
-tCell *dequeueMem(wQueue *const q) {
+tCell *dequeue(wQueue *const q) {
     tCell *res = q->first;
     q->first = q->first->next;
-
     if (q->first == NULL) {
         q->last = NULL;
     }
@@ -46,7 +44,6 @@ tCell *dequeueMem(wQueue *const q) {
 int is_empty(wQueue const *const q) {
     return (q->first == NULL);
 }
-
 
 void printAllTermsOfCells(wQueue const *const q) {
     tCell *tmp = q->first;
@@ -64,6 +61,4 @@ void printCell(tCell *cell) {
     memcpy(digestmain, cell->digest, HASH_LEN);
     digestmain[HASH_LEN] = '\0';
     printf("digest:%s\n", digestmain);
-    free(cell->term);
-    free(cell);
 }
