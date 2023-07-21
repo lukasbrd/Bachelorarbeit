@@ -28,14 +28,11 @@ typedef struct workQueue {
     int qlength;
 } wQueue;
 
+void enqueue(wQueue *const q, tCell *cell);
+tCell *dequeue(wQueue *const q);
 wQueue *init_queue();
 tCell *init_cell(char *term);
-
-void sendAndPersist(zsock_t *commandSocket, char *term, int cmd, wQueue *const q);
-tCell *receiveAndRestore(zsock_t *command, zsock_t *packageSocket, wQueue *const q);
-tCell *dequeue(wQueue *const q);
-void enqueue(wQueue *const q, tCell *cell);
-
 void printCell(tCell *cell);
+void printAllTermsOfCells(wQueue const *const q);
 
 #endif

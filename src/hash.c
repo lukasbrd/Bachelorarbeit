@@ -1,5 +1,4 @@
 #include <stdio.h>
-
 #include "hash.h"
 
 void hash(char *input, int len, char *digest) {

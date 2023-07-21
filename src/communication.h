@@ -1,5 +1,5 @@
-#ifndef COMMUNICATION_H
-#define COMMUNICATION_H
+#ifndef COMMUNICATIONH
+#define COMMUNICATIONH
 
 #include "queue.h"
 #include <czmq.h>

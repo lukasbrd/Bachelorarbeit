@@ -41,10 +41,6 @@ tCell *dequeue(wQueue *const q) {
     return res;
 }
 
-int is_empty(wQueue const *const q) {
-    return (q->first == NULL);
-}
-
 void printAllTermsOfCells(wQueue const *const q) {
     tCell *tmp = q->first;
     while (tmp != NULL) {

@@ -1,8 +1,8 @@
 /* 
  * $Id: sha.h,v 1.1 2002/01/28 11:03:44 mishan Exp $
  */
-#ifndef SHA_H
-#define SHA_H
+#ifndef SHAH
+#define SHAH
 
 #include <stdint.h>
 #include <stddef.h>
