@@ -13,7 +13,7 @@
 #define DEQUEUE 3
 #define TERMINATE 4
 
-#define INMEMORY 6
+#define INMEMORY 2
 
 typedef struct Cell {
     char *term;

@@ -31,7 +31,7 @@ int main(void) {
         free(receivedCell);
     }
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 0; i++) {
         char *term = createRandomString();
         printf("TermStart:%s\n", term);
         sendAndPersist(commandSocket, term, ENQUEUE, q);

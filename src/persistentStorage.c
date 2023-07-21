@@ -8,7 +8,7 @@ int writeOneTermToStorage(char *const term, const size_t len, const char digest[
     char dir[41] = "storage/";
     strcat(dir, readableHash);
 
-    if ((fd = open(dir, O_RDWR | O_CREAT | O_TRUNC, 00600)) == -1) {
+    if ((fd = open(dir, O_WRONLY | O_CREAT, 00600)) == -1) {
         fprintf(stderr, "Error opening file '%s': %s\n", dir, strerror(errno));
         return 1;
     }
@@ -35,7 +35,7 @@ char *readOneTermFromStorage(const char digest[HASH_LEN]) {
     char dir[41] = "storage/";
     strcat(dir, readableHash);
 
-    if ((fd = open(dir, O_RDWR, 00600)) == -1) {
+    if ((fd = open(dir, O_RDONLY, 00600)) == -1) {
         fprintf(stderr, "Error opening file '%s': %s\n", dir, strerror(errno));
         exit(1);
     }
@@ -45,9 +45,10 @@ char *readOneTermFromStorage(const char digest[HASH_LEN]) {
     term = (char *)malloc(sizeof(char) * (len + 1));
     read(fd, term, len);
     term[len] = '\0';
-    printf("readOneFromStorage: %s\n", term);
-
     close(fd);
+
+    assert(memcmp(buf,digest,20) == 0);
+    printf("readOneFromStorage: %s\n", term);
     return term;
 }
 

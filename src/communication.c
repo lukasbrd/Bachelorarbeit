@@ -6,6 +6,7 @@ void sendAndPersist(zsock_t *commandSocket, char *term, int cmd, wQueue *q) {
     if (cmd == ENQUEUE) {
         writeOneTermToStorage(cell->term, cell->term_length, cell->digest);
     }
+    printCell(cell);
     if (q->qlength > INMEMORY) {
         cell->term = NULL;
         free(term);
@@ -15,6 +16,7 @@ void sendAndPersist(zsock_t *commandSocket, char *term, int cmd, wQueue *q) {
 }
 
 tCell *receiveAndRestore(zsock_t *command, zsock_t *packageSocket, wQueue *q) {
+    printf("DequeueLength: %d\n", q->qlength);
     if (q->qlength == 0) {
         return NULL;
     }
@@ -26,6 +28,5 @@ tCell *receiveAndRestore(zsock_t *command, zsock_t *packageSocket, wQueue *q) {
         receivedCell->term = readOneTermFromStorage(receivedCell->digest);
     }
     (q->qlength)--;
-    printf("DequeueLength: %d\n", q->qlength);
     return receivedCell;
 }
