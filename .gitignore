@@ -1,6 +1,9 @@
 CKurs.first.code-workspace
 
-*
-!.gitignore
-!*.c
-!*.h
+
+/*
+!/src/
+!/src/**
+
+!/test/
+!/test/**
