@@ -21,29 +21,31 @@ int main(void) {
     }
     pthread_mutex_unlock(&mutex);
 
-    readAllTermsFromStorageToQueue(commandSocket, q);
+    //readAllTermsFromStorageToQueue(commandSocket, q);
 
+    /*
     if (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = receiveAndRestore(commandSocket, packageSocket, q);
         printCell(receivedCell);
         free(receivedCell->term);
         free(receivedCell);
-    }
+    }*/
 
-    for (int i = 0; i < 0; i++) {
+    for (int i = 0; i < 2; i++) {
         char *term = createRandomString();
         printf("TermStart:%s\n", term);
         sendAndPersist(commandSocket, term, ENQUEUE, q);
     }
 
+    /*
     while (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = receiveAndRestore(commandSocket, packageSocket, q);
         printCell(receivedCell);
         free(receivedCell->term);
         free(receivedCell);
-    }
+    }*/
 
     zsock_send(commandSocket, "ip", TERMINATE, NULL);
     pthread_join(thread, NULL);

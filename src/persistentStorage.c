@@ -1,95 +1,178 @@
 #include "persistentStorage.h"
+#include "hash.h"
+#include "queue.h"
+#include <assert.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <sqlite3.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 int writeOneTermToStorage(char *const term, const size_t len, const char digest[HASH_LEN]) {
-    char readableHash[READABLE_HASH_LEN];
-    print_readable_digest(digest, readableHash);
-    int fd;
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    char *err_msg = 0;
+    int rc = sqlite3_open("queue.db", &db);
 
-    char dir[41] = "storage/";
-    strcat(dir, readableHash);
-
-    if ((fd = open(dir, O_WRONLY | O_CREAT, 00600)) == -1) {
-        fprintf(stderr, "Error opening file '%s': %s\n", dir, strerror(errno));
-        return 1;
+    // database connection
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
     }
 
-    char buf[28 + len];
+    // create table
+    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB PRIMARY KEY, len INT, term TEXT);";
+    rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot create table: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+    }
 
-    memcpy(buf, digest, 20);
-    memcpy(buf + 20, &len, sizeof(size_t));
-    memcpy(buf + 28, term, len);
+    // prepare statement
+    const char *sql2 = "INSERT INTO state (digest, len, term) VALUES (?,?,?)";
+    rc = sqlite3_prepare_v2(db, sql2, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
 
-    write(fd, buf, (28 + len));
-    close(fd);
+    // bind parameters
+    rc = sqlite3_bind_blob(stmt, 1, digest, 20, SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind digest: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+
+    rc = sqlite3_bind_int(stmt, 2, len);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind len: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+
+    rc = sqlite3_bind_text(stmt, 3, term, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot bind term: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+
+    // execute statement
+    rc = sqlite3_step(stmt);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Execution failed: %s\n", sqlite3_errmsg(db));
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
     return 0;
 }
 
+/*
 char *readOneTermFromStorage(const char digest[HASH_LEN]) {
-    char readableHash[READABLE_HASH_LEN];
-    print_readable_digest(digest, readableHash);
-    int fd;
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_open("queue.db", &db);
+    char digest[HASH_LEN];
     size_t len;
-    char buf[28];
     char *term;
 
-    char dir[41] = "storage/";
-    strcat(dir, readableHash);
-
-    if ((fd = open(dir, O_RDONLY, 00600)) == -1) {
-        fprintf(stderr, "Error opening file '%s': %s\n", dir, strerror(errno));
-        exit(1);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
     }
 
-    read(fd, buf, 28);
-    memcpy(&len, buf + 20, sizeof(size_t));
+    const char *sql = "SELECT digest, len, term FROM state";
+
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+
+    memcpy(digest, sqlite3_column_blob(stmt, 0), HASH_LEN);
+    len = sqlite3_column_int(stmt, 1);
     term = (char *)malloc(sizeof(char) * (len + 1));
-    read(fd, term, len);
+    char *buf = (char *)sqlite3_column_text(stmt, 2);
+    strncpy(term, buf, len);
     term[len] = '\0';
-    close(fd);
+    enqueue(q, term, len, digest);
 
-    assert(memcmp(buf,digest,20) == 0);
-    printf("readOneFromStorage: %s\n", term);
-    return term;
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
 }
 
-int deleteOneTermFromStorage(const char digest[HASH_LEN]) {
-    char readableHash[READABLE_HASH_LEN];
-    print_readable_digest(digest, readableHash);
+void deleteFromStorage(const char digest[HASH_LEN]) {
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    char *err_msg = 0;
+    int rc = sqlite3_open("queue.db", &db);
+    char buf[HASH_LEN] = "";
+    memcpy(buf, digest, HASH_LEN);
 
-    char dir[41] = "storage/";
-    strcat(dir, readableHash);
-
-    int del = remove(dir);
-    return 0;
-}
-
-int readAllTermsFromStorageToQueue(zsock_t *command, wQueue *const q) {
-    size_t len;
-    char digest[HASH_LEN];
-    char buf[28];
-    int fd;
-
-    DIR *dir;
-    struct dirent *dp;
-
-    dir = opendir("storage/");
-    if (dir != NULL) {
-        while (dp = readdir(dir)) {
-            if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
-                fd = openat(dirfd(dir), dp->d_name, O_RDONLY);
-                read(fd, buf, 28);
-                memcpy(digest, buf, 20);
-                memcpy(&len, buf + 20, sizeof(size_t));
-                char *term = (char *)malloc(sizeof(char) * (len + 1));
-                term[len] = '\0';
-                read(fd, term, len);
-                sendAndPersist(command, term, RESTORED, q);
-                close(fd);
-            }
-        }
-    } else {
-        fprintf(stderr, "Error opening directory: %s\n", strerror(errno));
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
     }
-    closedir(dir);
-    return 0;
+
+    const char *sql = "DELETE FROM state WHERE digest = ?";
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+
+    sqlite3_bind_text(stmt, 1, buf, -1, SQLITE_STATIC);
+
+    rc = sqlite3_step(stmt);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Execution failed: %s\n", sqlite3_errmsg(db));
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
 }
+
+/*
+void readAllFromStorageToQueue(wQueue *const q) {
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_open("queue.db", &db);
+    char digest[HASH_LEN];
+    size_t len;
+    char *term;
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+    }
+
+    const char *sql = "SELECT digest, len, term FROM state";
+
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        memcpy(digest, sqlite3_column_blob(stmt, 0), HASH_LEN);
+        len = sqlite3_column_int(stmt, 1);
+        term = (char *)malloc(sizeof(char) * (len + 1));
+        char *buf = (char *)sqlite3_column_text(stmt, 2);
+        strncpy(term, buf, len);
+        term[len] = '\0';
+        enqueue(q, term, len, digest);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+}*/

@@ -52,8 +52,8 @@ void printAllTermsOfCells(wQueue const *const q) {
 
 void printCell(tCell *cell) {
     char digestmain[HASH_LEN + 1];
-    printf("receivedTerm: %s\n", cell->term);
-    printf("receivedTermLength: %ld\n", cell->term_length);
+    printf("Term: %s\n", cell->term);
+    printf("TermLength: %ld\n", cell->term_length);
     memcpy(digestmain, cell->digest, HASH_LEN);
     digestmain[HASH_LEN] = '\0';
     printf("digest:%s\n", digestmain);
