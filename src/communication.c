@@ -2,17 +2,17 @@
 #include "persistentStorage.h"
 
 void sendAndPersist(zsock_t *commandSocket, char *term, int cmd, wQueue *q) {
+    (q->qlength)++;
     tCell *cell = init_cell(term);
     if (cmd == ENQUEUE) {
         writeOneTermToStorage(cell->term, cell->term_length, cell->digest);
     }
-    printCell(cell);
+    // printCell(cell);
     if (q->qlength > INMEMORY) {
         cell->term = NULL;
         free(term);
     }
     zsock_send(commandSocket, "ip", cmd, cell);
-    (q->qlength)++;
 }
 
 tCell *receiveAndRestore(zsock_t *command, zsock_t *packageSocket, wQueue *q) {

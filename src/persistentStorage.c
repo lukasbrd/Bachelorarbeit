@@ -5,12 +5,12 @@ int writeOneTermToStorage(char *const term, const size_t len, const char digest[
     print_readable_digest(digest, readableHash);
     int fd;
 
-    int mkdirResult = mkdir("storage", 0700);
+    mkdir("storage", 0700);
 
     char dir[41] = "storage/";
     strcat(dir, readableHash);
 
-    if ((fd = open(dir, O_WRONLY | O_CREAT, 00600)) == -1) {
+    if ((fd = open(dir, O_WRONLY | O_CREAT | O_TRUNC, 00600)) == -1) {
         fprintf(stderr, "Error opening file1: '%s': %s\n", dir, strerror(errno));
         return 1;
     }
@@ -34,7 +34,7 @@ char *readOneTermFromStorage(const char digest[HASH_LEN]) {
     char buf[28];
     char *term;
 
-    int mkdirResult = mkdir("storage", 0700);
+    mkdir("storage", 0700);
 
     char dir[41] = "storage/";
     strcat(dir, readableHash);
@@ -82,12 +82,12 @@ int readAllTermsFromStorageToQueue(zsock_t *command, wQueue *const q) {
     DIR *dir;
     struct dirent *dp;
 
-    int mkdirResult = mkdir("storage", 0700);
+    mkdir("storage", 0700);
 
     dir = opendir("storage/");
     if (dir != NULL) {
-        while (dp = readdir(dir)) {
-            if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
+        while ((dp = readdir(dir))) {
+            if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
                 fd = openat(dirfd(dir), dp->d_name, O_RDONLY);
                 read(fd, buf, 28);
                 memcpy(digest, buf, 20);

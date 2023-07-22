@@ -7,7 +7,6 @@
 #include <stdio.h>
 
 int main(void) {
-    srand(time(NULL));
     zsock_t *commandSocket = zsock_new_push("inproc://command");
     zsock_t *packageSocket = zsock_new_pull("inproc://package");
 
@@ -22,7 +21,7 @@ int main(void) {
     pthread_mutex_unlock(&mutex);
 
     readAllTermsFromStorageToQueue(commandSocket, q);
-
+    
     if (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = receiveAndRestore(commandSocket, packageSocket, q);
@@ -32,6 +31,7 @@ int main(void) {
         free(receivedCell);
     }
 
+    srand(0);
     for (int i = 0; i < 4; i++) {
         char *term = createRandomString();
         printf("TermStart:%s\n", term);

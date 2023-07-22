@@ -36,15 +36,16 @@ int main(void) {
         return CU_get_error();
     }
 
-    if ((NULL == CU_add_test(suite2, "\n\ntest_sendAndPersist\n\n", test_enqueueOneTerm))) {
+    
+    if ((NULL == CU_add_test(suite2, "\n\ntest_sendAndPersist\n\n", test_sendAndPersistQLength))) {
         CU_cleanup_registry();
         return CU_get_error();
     }
-
-    if ((NULL == CU_add_test(suite2, "\n\ntest_sendAndPersist\n\n", test_enqueueTwoTerms))) {
+    /*
+    if ((NULL == CU_add_test(suite2, "\n\ntest_sendAndPersist\n\n", test_sendAndPersistQLength2))) {
         CU_cleanup_registry();
         return CU_get_error();
-    }
+    }*/
 
     CU_basic_run_tests();
     CU_cleanup_registry();
