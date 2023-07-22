@@ -21,17 +21,16 @@ int main(void) {
     }
     pthread_mutex_unlock(&mutex);
 
-    //readAllTermsFromStorageToQueue(commandSocket, q);
+    readAllTermsFromStorageToQueue(commandSocket, q);
 
-    
-    /*
     if (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = receiveAndRestore(commandSocket, packageSocket, q);
         printCell(receivedCell);
+        deleteOneTermFromStorage(receivedCell->digest);
         free(receivedCell->term);
         free(receivedCell);
-    }*/
+    }
 
     for (int i = 0; i < 2; i++) {
         char *term = createRandomString();
@@ -39,11 +38,11 @@ int main(void) {
         sendAndPersist(commandSocket, term, ENQUEUE, q);
     }
 
-    
     while (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = receiveAndRestore(commandSocket, packageSocket, q);
         printCell(receivedCell);
+        deleteOneTermFromStorage(receivedCell->digest);
         free(receivedCell->term);
         free(receivedCell);
     }

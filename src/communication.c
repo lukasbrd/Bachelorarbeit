@@ -17,7 +17,7 @@ void sendAndPersist(zsock_t *commandSocket, char *term, int cmd, wQueue *q) {
 
 
 tCell *receiveAndRestore(zsock_t *command, zsock_t *packageSocket, wQueue *q) {
-    printf("DequeueLength: %d\n", q->qlength);
+    printf("Length before Dequeue-Operation: %d\n", q->qlength);
     if (q->qlength == 0) {
         return NULL;
     }
