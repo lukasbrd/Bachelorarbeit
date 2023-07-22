@@ -5,11 +5,13 @@ int writeOneTermToStorage(char *const term, const size_t len, const char digest[
     print_readable_digest(digest, readableHash);
     int fd;
 
+    int mkdirResult = mkdir("storage", 0700);
+
     char dir[41] = "storage/";
     strcat(dir, readableHash);
 
     if ((fd = open(dir, O_WRONLY | O_CREAT, 00600)) == -1) {
-        fprintf(stderr, "Error opening file '%s': %s\n", dir, strerror(errno));
+        fprintf(stderr, "Error opening file1: '%s': %s\n", dir, strerror(errno));
         return 1;
     }
 
@@ -32,12 +34,13 @@ char *readOneTermFromStorage(const char digest[HASH_LEN]) {
     char buf[28];
     char *term;
 
+    int mkdirResult = mkdir("storage", 0700);
+
     char dir[41] = "storage/";
     strcat(dir, readableHash);
 
     if ((fd = open(dir, O_RDONLY, 00600)) == -1) {
-        fprintf(stderr, "Error opening file '%s': %s\n", dir, strerror(errno));
-        exit(1);
+        fprintf(stderr, "Error opening file2: '%s': %s\n", dir, strerror(errno));
     }
 
     read(fd, buf, 28);
@@ -56,11 +59,18 @@ int deleteOneTermFromStorage(const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
 
+    int mkdirResult = mkdir("storage", 0700);
+
     char dir[41] = "storage/";
     strcat(dir, readableHash);
 
     int del = remove(dir);
-    return 0;
+    if (del == 0) {
+        return 0;
+    } else {
+        fprintf(stderr, "Error deleting file: %s\n", strerror(errno));
+        return 1;                    
+    }
 }
 
 int readAllTermsFromStorageToQueue(zsock_t *command, wQueue *const q) {
@@ -71,6 +81,8 @@ int readAllTermsFromStorageToQueue(zsock_t *command, wQueue *const q) {
 
     DIR *dir;
     struct dirent *dp;
+
+    int mkdirResult = mkdir("storage", 0700);
 
     dir = opendir("storage/");
     if (dir != NULL) {
