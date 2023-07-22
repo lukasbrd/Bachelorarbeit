@@ -23,6 +23,7 @@ int main(void) {
 
     //readAllTermsFromStorageToQueue(commandSocket, q);
 
+    
     /*
     if (q->qlength > 0) {
         tCell *receivedCell = NULL;
@@ -38,14 +39,14 @@ int main(void) {
         sendAndPersist(commandSocket, term, ENQUEUE, q);
     }
 
-    /*
+    
     while (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = receiveAndRestore(commandSocket, packageSocket, q);
         printCell(receivedCell);
         free(receivedCell->term);
         free(receivedCell);
-    }*/
+    }
 
     zsock_send(commandSocket, "ip", TERMINATE, NULL);
     pthread_join(thread, NULL);
