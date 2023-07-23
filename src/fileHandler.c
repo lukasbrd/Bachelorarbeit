@@ -1,6 +1,6 @@
-#include "persistentStorage.h"
+#include "fileHandler.h"
 
-int writeOneTermToStorage(char *const term, const size_t len, const char digest[HASH_LEN]) {
+int writeOneTermToFileStorage(char *const term, const size_t len, const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
@@ -26,7 +26,7 @@ int writeOneTermToStorage(char *const term, const size_t len, const char digest[
     return 0;
 }
 
-char *readOneTermFromStorage(const char digest[HASH_LEN]) {
+char *readOneTermFromFileStorage(const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
@@ -50,12 +50,12 @@ char *readOneTermFromStorage(const char digest[HASH_LEN]) {
     term[len] = '\0';
     close(fd);
 
-    assert(memcmp(buf,digest,20) == 0);
+    assert(memcmp(buf, digest, 20) == 0);
     printf("readOneFromStorage: %s\n", term);
     return term;
 }
 
-int deleteOneTermFromStorage(const char digest[HASH_LEN]) {
+int deleteOneTermFromFileStorage(const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
 
@@ -69,11 +69,11 @@ int deleteOneTermFromStorage(const char digest[HASH_LEN]) {
         return 0;
     } else {
         fprintf(stderr, "Error deleting file: %s\n", strerror(errno));
-        return 1;                    
+        return 1;
     }
 }
 
-int readAllTermsFromStorageToQueue(zsock_t *command, wQueue *const q) {
+int readAllTermsFromFileStorageToQueue(zsock_t *command, wQueue *const q) {
     size_t len;
     char digest[HASH_LEN];
     char buf[28];

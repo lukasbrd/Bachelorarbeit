@@ -1,5 +1,5 @@
 #include "communication.h"
-#include "persistentStorage.h"
+#include "persistenceInterface.h"
 #include "qthread.h"
 #include "queue.h"
 #include "randomService.h"
@@ -20,18 +20,18 @@ int main(void) {
     }
     pthread_mutex_unlock(&mutex);
 
-    readAllTermsFromStorageToQueue(commandSocket, q);
+    readAllTerms(commandSocket, q);
     
     if (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = receiveAndRestore(commandSocket, packageSocket, q);
         printCell(receivedCell);
-        deleteOneTermFromStorage(receivedCell->digest);
+        //deleteOneTerm(receivedCell->digest);
         free(receivedCell->term);
         free(receivedCell);
     }
 
-    srand(0);
+    srand(time(NULL));
     for (int i = 0; i < 4; i++) {
         char *term = createRandomString();
         printf("TermStart:%s\n", term);
@@ -42,7 +42,7 @@ int main(void) {
         tCell *receivedCell = NULL;
         receivedCell = receiveAndRestore(commandSocket, packageSocket, q);
         printCell(receivedCell);
-        deleteOneTermFromStorage(receivedCell->digest);
+        //deleteOneTerm(receivedCell->digest);
         free(receivedCell->term);
         free(receivedCell);
     }

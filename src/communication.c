@@ -1,11 +1,13 @@
 #include "communication.h"
-#include "persistentStorage.h"
+#include "persistenceInterface.h"
+#include "settings.h"
+
 
 void sendAndPersist(zsock_t *commandSocket, char *term, int cmd, wQueue *q) {
     (q->qlength)++;
     tCell *cell = init_cell(term);
     if (cmd == ENQUEUE) {
-        writeOneTermToStorage(cell->term, cell->term_length, cell->digest);
+        persistOneTerm(cell->term, cell->term_length, cell->digest);
     }
     // printCell(cell);
     if (q->qlength > INMEMORY) {
@@ -25,7 +27,7 @@ tCell *receiveAndRestore(zsock_t *command, zsock_t *packageSocket, wQueue *q) {
     int rc = zsock_recv(packageSocket, "p", &receivedCell);
     assert(rc == 0);
     if (receivedCell->term == NULL) {
-        receivedCell->term = readOneTermFromStorage(receivedCell->digest);
+        receivedCell->term = loadOneTerm(receivedCell->digest);
     }
     (q->qlength)--;
     return receivedCell;
