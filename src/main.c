@@ -21,7 +21,8 @@ int main(void) {
     pthread_mutex_unlock(&mutex);
 
     readAllTerms(commandSocket, q);
-    
+
+    /*
     if (q->qlength > 0) {
         tCell *receivedCell = NULL;
         receivedCell = receiveAndRestore(commandSocket, packageSocket, q);
@@ -29,9 +30,9 @@ int main(void) {
         //deleteOneTerm(receivedCell->digest);
         free(receivedCell->term);
         free(receivedCell);
-    }
+    }*/
 
-    srand(time(NULL));
+    srand(1);
     for (int i = 0; i < 4; i++) {
         char *term = createRandomString();
         printf("TermStart:%s\n", term);

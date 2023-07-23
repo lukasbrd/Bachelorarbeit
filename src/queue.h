@@ -1,5 +1,5 @@
-#ifndef threadHeader
-#define threadHeader
+#ifndef QUEUE_HEADER
+#define QUEUE_HEADER
 
 #include "hash.h"
 #include <czmq.h>

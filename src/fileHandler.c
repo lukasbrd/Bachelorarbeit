@@ -59,7 +59,7 @@ int deleteOneTermFromFileStorage(const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
 
-    int mkdirResult = mkdir("storage", 0700);
+    mkdir("storage", 0700);
 
     char dir[41] = "storage/";
     strcat(dir, readableHash);

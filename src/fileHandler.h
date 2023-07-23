@@ -1,5 +1,5 @@
-#ifndef PERSISTENTSTORAGE
-#define PERSISTENTSTORAGE
+#ifndef FILEHANDLER_HEADER
+#define FILEHANDLER_HEADER
 
 #include "hash.h"
 #include "queue.h"

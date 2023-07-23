@@ -1,5 +1,5 @@
-#ifndef QTHREAD
-#define QTHREAD
+#ifndef QTHREAD_HEADER
+#define QTHREAD_HEADER
 
 #include "queue.h"
 

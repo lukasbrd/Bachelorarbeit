@@ -3,6 +3,7 @@
 #include "settings.h"
 
 
+
 void sendAndPersist(zsock_t *commandSocket, char *term, int cmd, wQueue *q) {
     (q->qlength)++;
     tCell *cell = init_cell(term);
