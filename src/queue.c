@@ -1,6 +1,4 @@
 #include "queue.h"
-#include <stdio.h>
-#include <string.h>
 
 wQueue *init_queue() {
     wQueue *q = (wQueue *)malloc(sizeof(wQueue));

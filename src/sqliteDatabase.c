@@ -1,13 +1,6 @@
-#include "hash.h"
 #include "sqliteDatabase.h"
-#include "queue.h"
-#include <assert.h>
-#include <dirent.h>
-#include <fcntl.h>
 #include <sqlite3.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+
 
 void writeOneTermToSQLiteDatabase(char *const term, const size_t len, const char digest[HASH_LEN]) {
     sqlite3 *db;
@@ -141,7 +134,9 @@ char *readOneTermFromSQLiteDatabase(const char digest[HASH_LEN]) {
 
     if (memcmp(fileDigest, digest, HASH_LEN) != 0) {
         fprintf(stderr, "The fileDigest does not match the given digest.\n ");
+        return NULL;
     }
+    printf("readOneFromDatabase: %s\n", term);
     return term;
 }
 

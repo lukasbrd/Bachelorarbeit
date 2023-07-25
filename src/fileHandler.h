@@ -11,9 +11,9 @@
 #include <string.h>
 #include <unistd.h>
 
-int writeOneTermToFileStorage(char *const term, const size_t len, const char digest[HASH_LEN]);
+void writeOneTermToFileStorage(char *const term, const size_t len, const char digest[HASH_LEN]);
 char *readOneTermFromFileStorage(const char digest[HASH_LEN]);
-int deleteOneTermFromFileStorage(const char digest[HASH_LEN]);
-int readAllTermsFromFileStorageToQueue(zsock_t *command, wQueue *const q);
+void deleteOneTermFromFileStorage(const char digest[HASH_LEN]);
+void readAllTermsFromFileStorageToQueue(zsock_t *command, wQueue *const q);
 
 #endif

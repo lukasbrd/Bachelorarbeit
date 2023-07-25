@@ -15,7 +15,7 @@
 
 /* Based on SHA code originally posted to sci.crypt by Peter Gutmann
    in message <30ajo5$oe8@ccu2.auckland.ac.nz>.
-   Modified to test for endianness on creation of SHA objects by AMK.
+   Modified to tests for endianness on creation of SHA objects by AMK.
    Also, the original specification of SHA was found to have a weakness
    by NSA/NIST.  This code implements the fixed version of SHA.
 */

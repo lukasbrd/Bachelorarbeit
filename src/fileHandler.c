@@ -1,6 +1,6 @@
 #include "fileHandler.h"
 
-int writeOneTermToFileStorage(char *const term, const size_t len, const char digest[HASH_LEN]) {
+void writeOneTermToFileStorage(char *const term, const size_t len, const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
@@ -12,7 +12,7 @@ int writeOneTermToFileStorage(char *const term, const size_t len, const char dig
 
     if ((fd = open(dir, O_WRONLY | O_CREAT | O_TRUNC, 00600)) == -1) {
         fprintf(stderr, "Error opening file1: '%s': %s\n", dir, strerror(errno));
-        return 1;
+        return;
     }
 
     char buf[28 + len];
@@ -23,7 +23,6 @@ int writeOneTermToFileStorage(char *const term, const size_t len, const char dig
 
     write(fd, buf, (28 + len));
     close(fd);
-    return 0;
 }
 
 char *readOneTermFromFileStorage(const char digest[HASH_LEN]) {
@@ -41,6 +40,7 @@ char *readOneTermFromFileStorage(const char digest[HASH_LEN]) {
 
     if ((fd = open(dir, O_RDONLY, 00600)) == -1) {
         fprintf(stderr, "Error opening file2: '%s': %s\n", dir, strerror(errno));
+        return NULL;
     }
 
     read(fd, buf, 28);
@@ -50,12 +50,16 @@ char *readOneTermFromFileStorage(const char digest[HASH_LEN]) {
     term[len] = '\0';
     close(fd);
 
-    assert(memcmp(buf, digest, 20) == 0);
-    printf("readOneFromStorage: %s\n", term);
+    if (memcmp(buf, digest, HASH_LEN) != 0) {
+        fprintf(stderr, "The fileDigest does not match the given digest.\n ");
+        return NULL;
+    }
+
+    printf("readOneFromFileStorage: %s\n", term);
     return term;
 }
 
-int deleteOneTermFromFileStorage(const char digest[HASH_LEN]) {
+void deleteOneTermFromFileStorage(const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
 
@@ -66,14 +70,13 @@ int deleteOneTermFromFileStorage(const char digest[HASH_LEN]) {
 
     int del = remove(dir);
     if (del == 0) {
-        return 0;
+        return;
     } else {
         fprintf(stderr, "Error deleting file: %s\n", strerror(errno));
-        return 1;
     }
 }
 
-int readAllTermsFromFileStorageToQueue(zsock_t *command, wQueue *const q) {
+void readAllTermsFromFileStorageToQueue(zsock_t *command, wQueue *const q) {
     size_t len;
     char digest[HASH_LEN];
     char buf[28];
@@ -103,5 +106,4 @@ int readAllTermsFromFileStorageToQueue(zsock_t *command, wQueue *const q) {
         fprintf(stderr, "Error opening directory: %s\n", strerror(errno));
     }
     closedir(dir);
-    return 0;
 }

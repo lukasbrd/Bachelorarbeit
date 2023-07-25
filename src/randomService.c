@@ -1,5 +1,4 @@
 #include "randomService.h"
-#include <stdio.h>
 #include <stdlib.h>
 
 char *createRandomString() {

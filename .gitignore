@@ -3,7 +3,5 @@ CKurs.first.code-workspace
 
 /*
 !/src/
-!/src/**
 
-!/test/
-!/test/**
+
