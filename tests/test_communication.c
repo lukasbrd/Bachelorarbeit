@@ -20,13 +20,15 @@ void test_sendAndPersist_persistOneTerm_called(void **state) {
     char testtermdigest[HASH_LEN];
     size_t term_length = strlen(testterm);
     hash(testterm, (int)term_length, testtermdigest);
-    zsock_t *commandSocket;
+    zsock_t *commandSocket =  zsock_new_push("inproc://test");
 
     expect_string(__wrap_persistOneTerm, term, "testterm");
     expect_value(__wrap_persistOneTerm, term_length, 8);
     expect_memory(__wrap_persistOneTerm,digest,testtermdigest,HASH_LEN);
 
     sendAndPersist(commandSocket, testterm, testcmd, q);
+
+    zsock_destroy(&commandSocket);
     free(q);
 }
 
