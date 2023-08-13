@@ -13,20 +13,20 @@ void *qthread(void *args) {
     pthread_cond_broadcast(&condition);
     pthread_mutex_unlock(&mutex);
 
-    wQueue *q = (wQueue *)args;
+    Queue *q = (Queue *)args;
 
     while (1) {
         int cmd = 0;
-        tCell *cell = NULL;
-        int rc = zsock_recv(commandSocket, "ip", &cmd, &cell);
-        assert(rc == 0);
+        Element *element = NULL;
+
+        zsock_recv(commandSocket, "ip", &cmd, &element);
 
         if (cmd == ENQUEUE || cmd == RESTORED) {
-            enqueue(q, cell);
+            enqueue(q, element);
         } else if (cmd == DEQUEUE) {
-            tCell *receivedCell = NULL;
-            receivedCell = dequeue(q);
-            zsock_send(packageSocket, "p", receivedCell);
+            Element *dequeuedElement = NULL;
+            dequeuedElement = dequeue(q);
+            zsock_send(packageSocket, "p", dequeuedElement);
         } else if (cmd == TERMINATE) {
             zsock_destroy(&commandSocket);
             zsock_destroy(&packageSocket);

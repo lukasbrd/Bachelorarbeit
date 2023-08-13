@@ -3,38 +3,38 @@
 #include "fileHandler.h"
 #include "sqliteDatabase.h"
 
-void persistOneTerm(char *const term, const size_t len, const char digest[HASH_LEN]) {
+void persistOneState(char *const state, const size_t len, const char digest[HASH_LEN]) {
 #ifdef FILEHANDLER
-    writeOneTermToFileStorage(term, len, digest);
+    writeOneStateToFileStorage(state, len, digest);
 #endif
 #ifdef SQLITE
-    writeOneTermToSQLiteDatabase(term, len, digest);
+    writeOneStateToSQLiteDatabase(state, len, digest);
 #endif
 }
 
-char *loadOneTerm(const char digest[HASH_LEN]) {
+char *restoreOneState(const char digest[HASH_LEN]) {
 #ifdef FILEHANDLER
-    return readOneTermFromFileStorage(digest);
+    return readOneStateFromFileStorage(digest);
 #endif
 #ifdef SQLITE
-    return readOneTermFromSQLiteDatabase(digest);
+    return readOneStateFromSQLiteDatabase(digest);
 #endif
 }
 
-void deleteOneTerm(const char digest[HASH_LEN]) {
+void deleteOneState(const char digest[HASH_LEN]) {
 #ifdef FILEHANDLER
-    deleteOneTermFromFileStorage(digest);
+    deleteOneStateFromFileStorage(digest);
 #endif
 #ifdef SQLITE
-    deleteOneTermFromSQLiteDatabse(digest);
+    deleteOneStateFromSQLiteDatabse(digest);
 #endif
 }
 
-void readAllTerms(zsock_t *command, wQueue *const q) {
+void readAllStates(zsock_t *command, Queue *const q) {
 #ifdef FILEHANDLER
-    readAllTermsFromFileStorageToQueue(command, q);
+    readAllStatesFromFileStorageToQueue(command, q);
 #endif
 #ifdef SQLITE
-    readAllTermsFromSQLiteDatabase(command,q);
+    readAllStatesFromSQLiteDatabaseToQueue(command, q);
 #endif
 }

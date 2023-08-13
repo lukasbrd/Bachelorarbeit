@@ -9,23 +9,14 @@
 #include <czmq.h>
 #include "tests.h"
 
-static int setup(void **state) {
-    return 0;
-}
-
-static int teardown(void **state) {
-    return 0;
-}
-
-
 int main() {
     const struct CMUnitTest tests[] = {
-            cmocka_unit_test_setup_teardown(test_init_queue, NULL, NULL),
-            cmocka_unit_test_setup_teardown(test_init_cell, setup, teardown),
-            cmocka_unit_test_setup_teardown(test_enqueueOneTerm, setup, teardown),
-            cmocka_unit_test_setup_teardown(test_enqueueTwoTerms, setup, teardown),
-            cmocka_unit_test_setup_teardown(test_sendAndPersist_persistOneTerm_called, setup, teardown),
-            //cmocka_unit_test_setup_teardown(test_sendAndPersist_zsock_send_called, setup, teardown),
+            cmocka_unit_test(test_init_queue),
+            cmocka_unit_test(test_init_cell),
+            cmocka_unit_test(test_enqueueOneTerm),
+            cmocka_unit_test(test_enqueueTwoTerms),
+            cmocka_unit_test(test_sendAndPersist),
+            cmocka_unit_test(test_dequeueOneTerm),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

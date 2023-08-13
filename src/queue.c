@@ -1,36 +1,34 @@
 #include "queue.h"
 
-wQueue *init_queue() {
-    wQueue *q = (wQueue *)malloc(sizeof(wQueue));
+Queue *initQueue() {
+    Queue *q = (Queue *)malloc(sizeof(Queue));
     q->first = NULL;
     q->last = NULL;
-    q->qlength = 0;
+    q->qLength = 0;
     return q;
 }
 
-tCell *init_cell(char *term) {
-    tCell *cell = malloc(sizeof(tCell));
-    cell->term = term;
-    cell->term_length = strlen(term);
-    hash(term, (int) cell->term_length, cell->digest);
-    cell->next = NULL;
-    return cell;
+Element *createElement(char *state) {
+    Element *element = malloc(sizeof(Element));
+    element->state = state;
+    element->stateLength = strlen(state);
+    hash(state, (int) element->stateLength, element->digest);
+    element->next = NULL;
+    return element;
 }
 
-void enqueue(wQueue *const q, tCell *cell) {
+void enqueue(Queue *const q, Element *element) {
     if (q->first == NULL) {
-        q->first = cell;
-        q->last = cell;
-        cell->next = NULL;
+        q->first = element;
+        q->last = element;
     } else {
-        q->last->next = cell;
-        q->last = cell;
-        cell->next = NULL;
+        q->last->next = element;
+        q->last = element;
     }
 }
 
-tCell *dequeue(wQueue *const q) {
-    tCell *res = q->first;
+Element *dequeue(Queue *const q) {
+    Element *res = q->first;
     q->first = q->first->next;
     if (q->first == NULL) {
         q->last = NULL;
@@ -39,20 +37,20 @@ tCell *dequeue(wQueue *const q) {
     return res;
 }
 
-void printAllTermsOfCells(wQueue const *const q) {
-    tCell *tmp = q->first;
+void printAllStatesOfElements(Queue const *const q) {
+    Element *tmp = q->first;
     while (tmp != NULL) {
-        printf("Length: %ld\n", tmp->term_length);
-        printf("Text: %s\n", tmp->term);
+        printf("Length: %ld\n", tmp->stateLength);
+        printf("Text: %s\n", tmp->state);
         tmp = tmp->next;
     }
 }
 
-void printCell(tCell *cell) {
+void printElement(Element *element) {
     char digestmain[HASH_LEN + 1];
-    printf("Term: %s\n", cell->term);
-    //printf("TermLength: %ld\n", cell->term_length);
-    memcpy(digestmain, cell->digest, HASH_LEN);
+    printf("State: %s\n", element->state);
+    //printf("StateLength: %ld\n", element->stateLength);
+    memcpy(digestmain, element->digest, HASH_LEN);
     digestmain[HASH_LEN] = '\0';
     //printf("digest:%s\n", digestmain);
 }

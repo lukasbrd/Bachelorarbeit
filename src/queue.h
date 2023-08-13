@@ -13,24 +13,24 @@
 #define DEQUEUE 3
 #define TERMINATE 4
 
-typedef struct Cell {
-    char *term;
+typedef struct Element {
+    char *state;
     char digest[HASH_LEN];
-    size_t term_length;
-    struct Cell *next;
-} tCell;
+    size_t stateLength;
+    struct Element *next;
+} Element;
 
-typedef struct workQueue {
-    tCell *first;
-    tCell *last;
-    int qlength;
-} wQueue;
+typedef struct Queue {
+    Element *first;
+    Element *last;
+    int qLength;
+} Queue;
 
-void enqueue(wQueue *const q, tCell *cell);
-tCell *dequeue(wQueue *const q);
-wQueue *init_queue();
-tCell *init_cell(char *term);
-void printCell(tCell *cell);
-void printAllTermsOfCells(wQueue const *const q);
+void enqueue(Queue *const q, Element *element);
+Element *dequeue(Queue *const q);
+Queue *initQueue();
+Element *createElement(char *state);
+void printElement(Element *element);
+void printAllStatesOfElements(Queue const *const q);
 
 #endif

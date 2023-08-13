@@ -1,6 +1,6 @@
 #include "fileHandler.h"
 
-void writeOneTermToFileStorage(char *const term, const size_t len, const char digest[HASH_LEN]) {
+void writeOneStateToFileStorage(char *const state, const size_t len, const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
@@ -19,19 +19,19 @@ void writeOneTermToFileStorage(char *const term, const size_t len, const char di
 
     memcpy(buf, digest, 20);
     memcpy(buf + 20, &len, sizeof(size_t));
-    memcpy(buf + 28, term, len);
+    memcpy(buf + 28, state, len);
 
     write(fd, buf, (28 + len));
     close(fd);
 }
 
-char *readOneTermFromFileStorage(const char digest[HASH_LEN]) {
+char *readOneStateFromFileStorage(const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
     size_t len;
     char buf[28];
-    char *term;
+    char *state;
 
     mkdir("storage", 0700);
 
@@ -45,21 +45,20 @@ char *readOneTermFromFileStorage(const char digest[HASH_LEN]) {
 
     read(fd, buf, 28);
     memcpy(&len, buf + 20, sizeof(size_t));
-    term = (char *)malloc(sizeof(char) * (len + 1));
-    read(fd, term, len);
-    term[len] = '\0';
+    state = (char *)malloc(sizeof(char) * (len + 1));
+    read(fd, state, len);
+    state[len] = '\0';
     close(fd);
 
     if (memcmp(buf, digest, HASH_LEN) != 0) {
         fprintf(stderr, "The fileDigest does not match the given digest.\n ");
-        return NULL;
     }
 
-    printf("readOneFromFileStorage: %s\n", term);
-    return term;
+    printf("readOneFromFileStorage: %s\n", state);
+    return state;
 }
 
-void deleteOneTermFromFileStorage(const char digest[HASH_LEN]) {
+void deleteOneStateFromFileStorage(const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
 
@@ -76,7 +75,7 @@ void deleteOneTermFromFileStorage(const char digest[HASH_LEN]) {
     }
 }
 
-void readAllTermsFromFileStorageToQueue(zsock_t *command, wQueue *const q) {
+void readAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
     size_t len;
     char digest[HASH_LEN];
     char buf[28];
@@ -95,10 +94,10 @@ void readAllTermsFromFileStorageToQueue(zsock_t *command, wQueue *const q) {
                 read(fd, buf, 28);
                 memcpy(digest, buf, 20);
                 memcpy(&len, buf + 20, sizeof(size_t));
-                char *term = (char *)malloc(sizeof(char) * (len + 1));
-                term[len] = '\0';
-                read(fd, term, len);
-                sendAndPersist(command, term, RESTORED, q);
+                char *state = (char *)malloc(sizeof(char) * (len + 1));
+                state[len] = '\0';
+                read(fd, state, len);
+                sendAndPersist(command, state, RESTORED, q);
                 close(fd);
             }
         }

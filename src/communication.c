@@ -2,32 +2,28 @@
 #include "persistenceInterface.h"
 #include "settings.h"
 
-void sendAndPersist(zsock_t *commandSocket, char *term, int cmd, wQueue *q) {
-    (q->qlength)++;
-    tCell *cell = init_cell(term);
-    if (cmd == ENQUEUE) {
-        persistOneTerm(cell->term, cell->term_length, cell->digest);
+void sendAndPersist(zsock_t *commandSocket, char *state, int cmd, Queue *q) {
+    (q->qLength)++;
+    Element *element = createElement(state);
+    if (cmd != RESTORED) {
+        persistOneState(element->state, element->stateLength, element->digest);
     }
-    // printCell(cell);
-    if (q->qlength > INMEMORY) {
-        cell->term = NULL;
-        free(term);
+    // printElement(element);
+    if (q->qLength > INMEMORY) {
+        element->state = NULL;
+        free(state);
     }
-    zsock_send(commandSocket, "ip", cmd, cell);
+    zsock_send(commandSocket, "ip", cmd, element);
 }
 
-tCell *receiveAndRestore(zsock_t *command, zsock_t *packageSocket, wQueue *q) {
-    printf("DequeueLength: %d\n", q->qlength);
-    if (q->qlength == 0) {
-        return NULL;
+Element *receiveAndRestore(zsock_t *commandSocket, zsock_t *packageSocket, Queue *q) {
+    printf("DequeueLength: %d\n", q->qLength);
+    Element *receivedElement = NULL;
+    zsock_send(commandSocket, "ip", DEQUEUE, NULL);
+    zsock_recv(packageSocket, "p", &receivedElement);
+    if (receivedElement->state == NULL) {
+        receivedElement->state = restoreOneState(receivedElement->digest);
     }
-    tCell *receivedCell = NULL;
-    zsock_send(command, "ip", DEQUEUE, NULL);
-    int rc = zsock_recv(packageSocket, "p", &receivedCell);
-    assert(rc == 0);
-    if (receivedCell->term == NULL) {
-        receivedCell->term = loadOneTerm(receivedCell->digest);
-    }
-    (q->qlength)--;
-    return receivedCell;
+    (q->qLength)--;
+    return receivedElement;
 }

@@ -2,11 +2,11 @@
 #include <sqlite3.h>
 
 
-void writeOneTermToSQLiteDatabase(char *const term, const size_t len, const char digest[HASH_LEN]) {
+void writeOneStateToSQLiteDatabase(char *const state, const size_t len, const char digest[HASH_LEN]) {
     sqlite3 *db;
     sqlite3_stmt *stmt;
     char *err_msg = 0;
-    int rc = sqlite3_open("queue.db", &db);
+    int rc = sqlite3_open("Queue.db", &db);
 
     // database connection
     if (rc != SQLITE_OK) {
@@ -16,7 +16,7 @@ void writeOneTermToSQLiteDatabase(char *const term, const size_t len, const char
     }
 
     // create table if not exists
-    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, term TEXT);";
+    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, state TEXT);";
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot create table: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -26,7 +26,7 @@ void writeOneTermToSQLiteDatabase(char *const term, const size_t len, const char
     }
 
     // prepare statement
-    const char *sql2 = "INSERT INTO state (digest, len, term) VALUES (?,?,?)";
+    const char *sql2 = "INSERT INTO state (digest, len, state) VALUES (?,?,?)";
     rc = sqlite3_prepare_v2(db, sql2, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot prepare statement: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -52,9 +52,9 @@ void writeOneTermToSQLiteDatabase(char *const term, const size_t len, const char
         return;
     }
 
-    rc = sqlite3_bind_text(stmt, 3, term, -1, SQLITE_STATIC);
+    rc = sqlite3_bind_text(stmt, 3, state, -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot bind term: %d: %s\n", rc, sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot bind state: %d: %s\n", rc, sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         sqlite3_close(db);
         return;
@@ -73,23 +73,23 @@ void writeOneTermToSQLiteDatabase(char *const term, const size_t len, const char
     sqlite3_close(db);
 }
 
-char *readOneTermFromSQLiteDatabase(const char digest[HASH_LEN]) {
+char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN]) {
     sqlite3 *db;
     sqlite3_stmt *stmt;
     char fileDigest[HASH_LEN];
     size_t len;
     char *buf = NULL;
-    char *term = NULL;
+    char *state = NULL;
     char *err_msg = 0;
 
-    int rc = sqlite3_open("queue.db", &db);
+    int rc = sqlite3_open("Queue.db", &db);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database %d: %s\n", rc, sqlite3_errmsg(db));
         sqlite3_close(db);
     }
 
     // create table if not exists
-    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, term TEXT);";
+    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, state TEXT);";
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot create table: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -97,7 +97,7 @@ char *readOneTermFromSQLiteDatabase(const char digest[HASH_LEN]) {
         sqlite3_close(db);
     }
 
-    const char *sql2 = "SELECT digest, len, term FROM state WHERE digest = ?";
+    const char *sql2 = "SELECT digest, len, state FROM state WHERE digest = ?";
     rc = sqlite3_prepare_v2(db, sql2, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot prepare statement: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -124,27 +124,26 @@ char *readOneTermFromSQLiteDatabase(const char digest[HASH_LEN]) {
     len = sqlite3_column_int(stmt, 1);
 
     buf = (char *)sqlite3_column_text(stmt, 2);
-    term = (char *)malloc(sizeof(char) * (len + 1));
-    memcpy(term, buf, len);
+    state = (char *)malloc(sizeof(char) * (len + 1));
+    memcpy(state, buf, len);
 
 
-    term[len] = '\0';
+    state[len] = '\0';
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 
     if (memcmp(fileDigest, digest, HASH_LEN) != 0) {
         fprintf(stderr, "The fileDigest does not match the given digest.\n ");
-        return NULL;
     }
-    printf("readOneFromDatabase: %s\n", term);
-    return term;
+    printf("readOneFromDatabase: %s\n", state);
+    return state;
 }
 
-void deleteOneTermFromSQLiteDatabse(const char digest[HASH_LEN]) {
+void deleteOneStateFromSQLiteDatabse(const char digest[HASH_LEN]) {
     sqlite3 *db;
     sqlite3_stmt *stmt;
     char *err_msg = 0;
-    int rc = sqlite3_open("queue.db", &db);
+    int rc = sqlite3_open("Queue.db", &db);
 
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -153,7 +152,7 @@ void deleteOneTermFromSQLiteDatabse(const char digest[HASH_LEN]) {
     }
 
     // create table if not exists
-    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, term TEXT);";
+    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, state TEXT);";
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot create table: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -192,12 +191,12 @@ void deleteOneTermFromSQLiteDatabse(const char digest[HASH_LEN]) {
     sqlite3_close(db);
 }
 
-void readAllTermsFromSQLiteDatabase(zsock_t *command, wQueue *const q) {
+void readAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *const q) {
     sqlite3 *db;
     sqlite3_stmt *stmt;
     char *err_msg = 0;
 
-    int rc = sqlite3_open("queue.db", &db);
+    int rc = sqlite3_open("Queue.db", &db);
 
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
@@ -206,7 +205,7 @@ void readAllTermsFromSQLiteDatabase(zsock_t *command, wQueue *const q) {
     }
 
     // create table if not exists
-    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, term TEXT);";
+    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, state TEXT);";
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot create table: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -215,7 +214,7 @@ void readAllTermsFromSQLiteDatabase(zsock_t *command, wQueue *const q) {
         return;
     }
 
-    const char *sql2 = "SELECT digest, len, term FROM state";
+    const char *sql2 = "SELECT digest, len, state FROM state";
     rc = sqlite3_prepare_v2(db, sql2, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
@@ -228,11 +227,11 @@ void readAllTermsFromSQLiteDatabase(zsock_t *command, wQueue *const q) {
         char digest[HASH_LEN];
         memcpy(digest, sqlite3_column_blob(stmt, 0), HASH_LEN);
         size_t len = sqlite3_column_int(stmt, 1);
-        char *term = (char *)malloc(sizeof(char) * (len + 1));
+        char *state = (char *)malloc(sizeof(char) * (len + 1));
         char *buf = (char *)sqlite3_column_text(stmt, 2);
-        memcpy(term, buf, len);
-        term[len] = '\0';
-        sendAndPersist(command, term, RESTORED, q);
+        memcpy(state, buf, len);
+        state[len] = '\0';
+        sendAndPersist(command, state, RESTORED, q);
     }
 
     sqlite3_finalize(stmt);

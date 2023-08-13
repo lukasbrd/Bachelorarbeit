@@ -1,7 +1,10 @@
 CKurs.first.code-workspace
 
-
 /*
-!/src/
+!/tests/*.c
+!/tests/*.h
+!/src/*.c
+!/src/*.h
+
 
 
