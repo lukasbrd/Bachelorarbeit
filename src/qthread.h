@@ -3,7 +3,7 @@
 
 #include "queue.h"
 
-extern volatile bool threadrunning;
+extern volatile bool threadRunning;
 extern pthread_cond_t condition;
 extern pthread_mutex_t mutex;
 

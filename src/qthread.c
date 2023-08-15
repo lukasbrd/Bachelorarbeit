@@ -1,6 +1,6 @@
 #include "qthread.h"
 
-volatile bool threadrunning = false;
+volatile bool threadRunning = false;
 pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -9,7 +9,7 @@ void *qthread(void *args) {
     zsock_t *packageSocket = zsock_new_push("inproc://package");
 
     pthread_mutex_lock(&mutex);
-    threadrunning = true;
+    threadRunning = true;
     pthread_cond_broadcast(&condition);
     pthread_mutex_unlock(&mutex);
 

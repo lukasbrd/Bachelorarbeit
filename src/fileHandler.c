@@ -75,7 +75,7 @@ void deleteOneStateFromFileStorage(const char digest[HASH_LEN]) {
     }
 }
 
-void readAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
+void restoreAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
     size_t len;
     char digest[HASH_LEN];
     char buf[28];

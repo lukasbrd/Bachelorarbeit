@@ -14,11 +14,11 @@ int main(void) {
     pthread_t thread;
     pthread_create(&thread, NULL, qthread, (void *)q);
     pthread_mutex_lock(&mutex);
-    while (!threadrunning) {
+    while (!threadRunning) {
         pthread_cond_wait(&condition, &mutex);
     }
     pthread_mutex_unlock(&mutex);
-    readAllStates(commandSocket, q);
+    restoreAllStates(commandSocket, q);
 
     srand(1);
     for (int i = 1; i <= NUMBEROFSTATES; i++) {
@@ -30,7 +30,7 @@ int main(void) {
         Element *receivedElement = NULL;
         receivedElement = receiveAndRestore(commandSocket, packageSocket, q);
         printElement(receivedElement);
-        deleteOneState(receivedElement->digest);
+        //deleteOneState(receivedElement->digest);
         free(receivedElement->state);
         free(receivedElement);
     }

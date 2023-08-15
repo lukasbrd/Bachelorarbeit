@@ -30,11 +30,11 @@ void deleteOneState(const char digest[HASH_LEN]) {
 #endif
 }
 
-void readAllStates(zsock_t *command, Queue *const q) {
+void restoreAllStates(zsock_t *command, Queue *const q) {
 #ifdef FILEHANDLER
-    readAllStatesFromFileStorageToQueue(command, q);
+    restoreAllStatesFromFileStorageToQueue(command, q);
 #endif
 #ifdef SQLITE
-    readAllStatesFromSQLiteDatabaseToQueue(command, q);
+    restoreAllStatesFromSQLiteDatabaseToQueue(command, q);
 #endif
 }
