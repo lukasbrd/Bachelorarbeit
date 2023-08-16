@@ -5,6 +5,8 @@ Queue *initQueue() {
     q->first = NULL;
     q->last = NULL;
     q->qLength = 0;
+    q->in_mem = 0;
+    q->not_in_mem = 0;
     return q;
 }
 

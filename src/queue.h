@@ -24,6 +24,8 @@ typedef struct Queue {
     Element *first;
     Element *last;
     int qLength;
+    int in_mem;
+    int not_in_mem;
 } Queue;
 
 void enqueue(Queue *const q, Element *element);

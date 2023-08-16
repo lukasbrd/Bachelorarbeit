@@ -30,7 +30,7 @@ int main(void) {
         Element *receivedElement = NULL;
         receivedElement = receiveAndRestore(commandSocket, packageSocket, q);
         printElement(receivedElement);
-        //deleteOneState(receivedElement->digest);
+        deleteOneState(receivedElement->digest);
         free(receivedElement->state);
         free(receivedElement);
     }
