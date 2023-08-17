@@ -40,7 +40,7 @@ void *qthread(void *args) {
             Element *dequeuedElement = NULL;
             dequeuedElement = dequeue(q);
             if (dequeuedElement->state == NULL) {
-                dequeuedElement->state = restoreOneState(dequeuedElement->digest);
+                dequeuedElement->state = restoreOneState(dequeuedElement->digest, dequeuedElement->stateLength);
                 q->not_in_mem--;
                 printf("DequeueNotInMem: %d\n",q->not_in_mem);
             } else {

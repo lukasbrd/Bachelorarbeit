@@ -11,9 +11,9 @@
 #include <string.h>
 #include <unistd.h>
 
-void writeOneStateToSQLiteDatabase(char *const state, const size_t len, const char digest[HASH_LEN]);
-char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN]);
+void writeOneStateToSQLiteDatabase(char *state, size_t len, const char digest[HASH_LEN]);
+char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldLen);
 void deleteOneStateFromSQLiteDatabse(const char digest[HASH_LEN]);
-void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *const q);
+void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *q);
 
 #endif

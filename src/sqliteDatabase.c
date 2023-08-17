@@ -73,7 +73,7 @@ void writeOneStateToSQLiteDatabase(char *const state, const size_t len, const ch
     sqlite3_close(db);
 }
 
-char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN]) {
+char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], const size_t oldLen) {
     sqlite3 *db;
     sqlite3_stmt *stmt;
     char fileDigest[HASH_LEN];
@@ -122,6 +122,10 @@ char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN]) {
 
     memcpy(fileDigest, sqlite3_column_blob(stmt, 0), HASH_LEN);
     len = sqlite3_column_int(stmt, 1);
+
+    if (len != oldLen) {
+        fprintf(stderr, "The old stateLength is different than the restored stateLength.\n");
+    }
 
     buf = (char *)sqlite3_column_text(stmt, 2);
     state = (char *)malloc(sizeof(char) * (len + 1));

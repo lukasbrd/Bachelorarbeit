@@ -12,12 +12,12 @@ void persistOneState(char *const state, const size_t len, const char digest[HASH
 #endif
 }
 
-char *restoreOneState(const char digest[HASH_LEN]) {
+char *restoreOneState(const char digest[HASH_LEN], const size_t oldLen) {
 #ifdef FILEHANDLER
     return readOneStateFromFileStorage(digest);
 #endif
 #ifdef SQLITE
-    return readOneStateFromSQLiteDatabase(digest);
+    return readOneStateFromSQLiteDatabase(digest, oldLen);
 #endif
 }
 
