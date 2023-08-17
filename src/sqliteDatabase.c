@@ -77,6 +77,7 @@ char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], const size_t o
     sqlite3 *db;
     sqlite3_stmt *stmt;
     char fileDigest[HASH_LEN];
+    char newDigest[HASH_LEN];
     size_t len;
     char *buf = NULL;
     char *state = NULL;
@@ -136,8 +137,9 @@ char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], const size_t o
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 
-    if (memcmp(fileDigest, digest, HASH_LEN) != 0) {
-        fprintf(stderr, "The fileDigest does not match the given digest.\n ");
+    hash(state, (int) len, newDigest);
+    if (memcmp(fileDigest, newDigest , HASH_LEN) != 0) {
+        fprintf(stderr, "The State was corrupted.\n ");
     }
     printf("readOneFromDatabase: %s\n", state);
     return state;
