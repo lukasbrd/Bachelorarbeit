@@ -14,7 +14,7 @@ void persistOneState(char *const state, const size_t len, const char digest[HASH
 
 char *restoreOneState(const char digest[HASH_LEN], const size_t oldLen) {
 #ifdef FILEHANDLER
-    return readOneStateFromFileStorage(digest);
+    return readOneStateFromFileStorage(digest, oldLen);
 #endif
 #ifdef SQLITE
     return readOneStateFromSQLiteDatabase(digest, oldLen);

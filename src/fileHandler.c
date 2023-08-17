@@ -25,7 +25,7 @@ void writeOneStateToFileStorage(char *const state, const size_t len, const char 
     close(fd);
 }
 
-char *readOneStateFromFileStorage(const char digest[HASH_LEN]) {
+char *readOneStateFromFileStorage(const char digest[HASH_LEN], const size_t oldLen) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
@@ -45,6 +45,11 @@ char *readOneStateFromFileStorage(const char digest[HASH_LEN]) {
 
     read(fd, buf, 28);
     memcpy(&len, buf + 20, sizeof(size_t));
+
+    if (len != oldLen) {
+        fprintf(stderr, "The old stateLength is different than the restored stateLength.\n");
+    }
+
     state = (char *)malloc(sizeof(char) * (len + 1));
     read(fd, state, len);
     state[len] = '\0';
