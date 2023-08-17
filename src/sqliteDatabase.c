@@ -4,7 +4,7 @@
 
 void writeOneStateToSQLiteDatabase(char *const state, const size_t len, const char digest[HASH_LEN]) {
     sqlite3 *db;
-    sqlite3_stmt *stmt;
+    sqlite3_stmt *stmt = NULL;
     char *err_msg = 0;
     int rc = sqlite3_open("queue.db", &db);
 
@@ -16,7 +16,7 @@ void writeOneStateToSQLiteDatabase(char *const state, const size_t len, const ch
     }
 
     // create table if not exists
-    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, state TEXT);";
+    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB PRIMARY KEY, len INT, state TEXT);";
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot create table: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -90,7 +90,7 @@ char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], const size_t o
     }
 
     // create table if not exists
-    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, state TEXT);";
+    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB PRIMARY KEY, len INT, state TEXT);";
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot create table: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -119,6 +119,7 @@ char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], const size_t o
         fprintf(stderr, "No data found with this digest: %d: %s\n", rc, sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         sqlite3_close(db);
+        return NULL;
     }
 
     memcpy(databaseDigest, sqlite3_column_blob(stmt, 0), HASH_LEN);
@@ -141,7 +142,6 @@ char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], const size_t o
     if (memcmp(databaseDigest, newDigest , HASH_LEN) != 0) {
         fprintf(stderr, "The State was corrupted.\n ");
     }
-    printf("readOneFromDatabase: %s\n", state);
     return state;
 }
 
@@ -158,7 +158,7 @@ void deleteOneStateFromSQLiteDatabse(const char digest[HASH_LEN]) {
     }
 
     // create table if not exists
-    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, state TEXT);";
+    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB PRIMARY KEY, len INT, state TEXT);";
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot create table: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -211,7 +211,7 @@ void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *const q)
     }
 
     // create table if not exists
-    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB, len INT, state TEXT);";
+    const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB PRIMARY KEY, len INT, state TEXT);";
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot create table: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -230,13 +230,20 @@ void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *const q)
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        char digest[HASH_LEN];
-        memcpy(digest, sqlite3_column_blob(stmt, 0), HASH_LEN);
+        char databaseDigest[HASH_LEN];
+        char newDigest[HASH_LEN];
+        memcpy(databaseDigest, sqlite3_column_blob(stmt, 0), HASH_LEN);
         size_t len = sqlite3_column_int(stmt, 1);
         char *state = (char *)malloc(sizeof(char) * (len + 1));
         char *buf = (char *)sqlite3_column_text(stmt, 2);
         memcpy(state, buf, len);
         state[len] = '\0';
+
+        hash(state, (int) len, newDigest);
+        if (memcmp(databaseDigest, newDigest , HASH_LEN) != 0) {
+            fprintf(stderr, "The State was corrupted.\n ");
+        }
+
         sendAndPersist(command, state, RESTORED, q);
     }
 

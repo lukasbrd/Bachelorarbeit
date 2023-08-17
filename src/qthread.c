@@ -30,10 +30,8 @@ void *qthread(void *args) {
                 free(element->state);
                 element->state = NULL;
                 q->not_in_mem++;
-                printf("insertnotInMem: %d\n",q->not_in_mem);
             } else {
                 q->in_mem++;
-                printf("insertinMem: %d\n",q->in_mem);
             }
             enqueue(q, element);
         } else if (cmd == DEQUEUE) {
@@ -42,10 +40,8 @@ void *qthread(void *args) {
             if (dequeuedElement->state == NULL) {
                 dequeuedElement->state = restoreOneState(dequeuedElement->digest, dequeuedElement->stateLength);
                 q->not_in_mem--;
-                printf("DequeueNotInMem: %d\n",q->not_in_mem);
             } else {
                 q->in_mem--;
-                printf("DequeueInMem: %d\n",q->in_mem);
             }
             zsock_send(packageSocket, "p", dequeuedElement);
         } else if (cmd == TERMINATE) {

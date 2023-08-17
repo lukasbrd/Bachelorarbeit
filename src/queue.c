@@ -39,6 +39,7 @@ Element *dequeue(Queue *const q) {
     return res;
 }
 
+/*
 void printAllStatesOfElements(Queue const *const q) {
     Element *tmp = q->first;
     while (tmp != NULL) {
@@ -46,13 +47,13 @@ void printAllStatesOfElements(Queue const *const q) {
         printf("Text: %s\n", tmp->state);
         tmp = tmp->next;
     }
-}
+}*/
 
 void printElement(Element *element) {
-    char digestmain[HASH_LEN + 1];
+    //char digestmain[HASH_LEN + 1];
     printf("State: %s\n", element->state);
     //printf("StateLength: %ld\n", element->stateLength);
-    memcpy(digestmain, element->digest, HASH_LEN);
-    digestmain[HASH_LEN] = '\0';
+    //memcpy(digestmain, element->digest, HASH_LEN);
+    //digestmain[HASH_LEN] = '\0';
     //printf("digest:%s\n", digestmain);
 }

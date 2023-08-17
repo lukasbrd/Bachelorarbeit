@@ -29,7 +29,7 @@ int main(void) {
     while (q->qLength > 0) {
         Element *receivedElement = NULL;
         receivedElement = receiveAndRestore(commandSocket, packageSocket, q);
-        printElement(receivedElement);
+        printf("State: %s\n", receivedElement->state);
         deleteOneState(receivedElement->digest);
         free(receivedElement->state);
         free(receivedElement);

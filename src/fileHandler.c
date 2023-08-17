@@ -41,7 +41,7 @@ char *readOneStateFromFileStorage(const char digest[HASH_LEN], const size_t oldL
     strcat(dir, readableHash);
 
     if ((fd = open(dir, O_RDONLY, 00600)) == -1) {
-        fprintf(stderr, "Error opening file2: '%s': %s\n", dir, strerror(errno));
+        fprintf(stderr, "There is no file for this hash: '%s': %s\n", dir, strerror(errno));
         return NULL;
     }
 
@@ -62,8 +62,6 @@ char *readOneStateFromFileStorage(const char digest[HASH_LEN], const size_t oldL
     if (memcmp(fileDigest, newDigest , HASH_LEN) != 0) {
         fprintf(stderr, "The State was corrupted.\n ");
     }
-
-    printf("readOneFromFileStorage: %s\n", state);
     return state;
 }
 
@@ -86,7 +84,8 @@ void deleteOneStateFromFileStorage(const char digest[HASH_LEN]) {
 
 void restoreAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
     size_t len;
-    char digest[HASH_LEN];
+    char fileDigest[HASH_LEN];
+    char newDigest[HASH_LEN];
     char buf[28];
     int fd;
 
@@ -101,11 +100,15 @@ void restoreAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
             if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
                 fd = openat(dirfd(dir), dp->d_name, O_RDONLY);
                 read(fd, buf, 28);
-                memcpy(digest, buf, 20);
+                memcpy(fileDigest, buf, 20);
                 memcpy(&len, buf + 20, sizeof(size_t));
                 char *state = (char *)malloc(sizeof(char) * (len + 1));
                 state[len] = '\0';
                 read(fd, state, len);
+                hash(state, (int) len, newDigest);
+                if (memcmp(fileDigest, newDigest , HASH_LEN) != 0) {
+                    fprintf(stderr, "The State was corrupted.\n ");
+                }
                 sendAndPersist(command, state, RESTORED, q);
                 close(fd);
             }
