@@ -27,6 +27,8 @@ void writeOneStateToFileStorage(char *const state, const size_t len, const char 
 
 char *readOneStateFromFileStorage(const char digest[HASH_LEN], const size_t oldLen) {
     char readableHash[READABLE_HASH_LEN];
+    char fileDigest[HASH_LEN];
+    char newDigest[HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
     size_t len;
@@ -44,6 +46,7 @@ char *readOneStateFromFileStorage(const char digest[HASH_LEN], const size_t oldL
     }
 
     read(fd, buf, 28);
+    memcpy(fileDigest,buf,HASH_LEN);
     memcpy(&len, buf + 20, sizeof(size_t));
 
     if (len != oldLen) {
@@ -55,8 +58,9 @@ char *readOneStateFromFileStorage(const char digest[HASH_LEN], const size_t oldL
     state[len] = '\0';
     close(fd);
 
-    if (memcmp(buf, digest, HASH_LEN) != 0) {
-        fprintf(stderr, "The fileDigest does not match the given digest.\n ");
+    hash(state, (int) len, newDigest);
+    if (memcmp(fileDigest, newDigest , HASH_LEN) != 0) {
+        fprintf(stderr, "The State was corrupted.\n ");
     }
 
     printf("readOneFromFileStorage: %s\n", state);

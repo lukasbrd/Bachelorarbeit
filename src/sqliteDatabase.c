@@ -75,8 +75,8 @@ void writeOneStateToSQLiteDatabase(char *const state, const size_t len, const ch
 
 char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], const size_t oldLen) {
     sqlite3 *db;
-    sqlite3_stmt *stmt;
-    char fileDigest[HASH_LEN];
+    sqlite3_stmt *stmt = NULL;
+    char databaseDigest[HASH_LEN];
     char newDigest[HASH_LEN];
     size_t len;
     char *buf = NULL;
@@ -121,7 +121,7 @@ char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], const size_t o
         sqlite3_close(db);
     }
 
-    memcpy(fileDigest, sqlite3_column_blob(stmt, 0), HASH_LEN);
+    memcpy(databaseDigest, sqlite3_column_blob(stmt, 0), HASH_LEN);
     len = sqlite3_column_int(stmt, 1);
 
     if (len != oldLen) {
@@ -138,7 +138,7 @@ char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], const size_t o
     sqlite3_close(db);
 
     hash(state, (int) len, newDigest);
-    if (memcmp(fileDigest, newDigest , HASH_LEN) != 0) {
+    if (memcmp(databaseDigest, newDigest , HASH_LEN) != 0) {
         fprintf(stderr, "The State was corrupted.\n ");
     }
     printf("readOneFromDatabase: %s\n", state);
@@ -147,7 +147,7 @@ char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], const size_t o
 
 void deleteOneStateFromSQLiteDatabse(const char digest[HASH_LEN]) {
     sqlite3 *db;
-    sqlite3_stmt *stmt;
+    sqlite3_stmt *stmt = NULL;
     char *err_msg = 0;
     int rc = sqlite3_open("queue.db", &db);
 
@@ -199,7 +199,7 @@ void deleteOneStateFromSQLiteDatabse(const char digest[HASH_LEN]) {
 
 void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *const q) {
     sqlite3 *db;
-    sqlite3_stmt *stmt;
+    sqlite3_stmt *stmt = NULL;
     char *err_msg = 0;
 
     int rc = sqlite3_open("queue.db", &db);
