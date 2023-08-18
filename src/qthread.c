@@ -6,7 +6,9 @@ volatile bool threadRunning = false;
 pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void *qthread(void *args) {
+void commandReceiver(zsock_t **commandSocket, zsock_t **packageSocket, Queue *q, int cmd, Element *element);
+
+_Noreturn void *qthread(void *args) {
     zsock_t *commandSocket = zsock_new_pull("inproc://command");
     zsock_t *packageSocket = zsock_new_push("inproc://package");
 
@@ -17,43 +19,38 @@ void *qthread(void *args) {
 
     Queue *q = (Queue *)args;
 
-    while (1) {
+    while (true) {
         int cmd = 0;
         Element *element = NULL;
         zsock_recv(commandSocket, "ip", &cmd, &element);
-
-        if(cmd == ENQUEUE) {
-            persistOneState(element->state, element->stateLength, element->digest);
-            stateInMemoryOrNot(q, element);
-            enqueue(q, element);
-        } else if (cmd == RESTORED) {
-            stateInMemoryOrNot(q, element);
-            enqueue(q, element);
-        } else if (cmd == DEQUEUE) {
-            Element *dequeuedElement = NULL;
-            dequeuedElement = dequeue(q);
-            restoreStateIfNecessary(q, dequeuedElement);
-            zsock_send(packageSocket, "p", dequeuedElement);
-        } else if (cmd == TERMINATE) {
-            zsock_destroy(&commandSocket);
-            zsock_destroy(&packageSocket);
-            pthread_exit(0);
-        } else {
-            fprintf(stderr, "Unknown command given to qthread.\n");
-        }
+        commandReceiver(&commandSocket, &packageSocket, q, cmd, element);
     }
 }
 
-void restoreStateIfNecessary(Queue *q, Element *dequeuedElement) {
-    if (dequeuedElement->state == NULL) {
-        dequeuedElement->state = restoreOneState(dequeuedElement->digest, dequeuedElement->stateLength);
-        q->not_in_mem--;
+void commandReceiver(zsock_t **commandSocket, zsock_t **packageSocket, Queue *q, int cmd, Element *element) {
+    if(cmd == ENQUEUE) {
+        persistOneState(element);
+        deleteStateIfMemFull(q, element);
+        enqueue(q, element);
+    } else if (cmd == RESTORED) {
+        deleteStateIfMemFull(q, element);
+        enqueue(q, element);
+    } else if (cmd == DEQUEUE) {
+        Element *dequeuedElement = NULL;
+        dequeuedElement = dequeue(q);
+        restoreStateIfItWasDeleted(q, dequeuedElement);
+        zsock_send((*packageSocket), "p", dequeuedElement);
+    } else if (cmd == TERMINATE) {
+        zsock_destroy(commandSocket);
+        zsock_destroy(packageSocket);
+        pthread_exit(0);
     } else {
-        q->in_mem--;
+        fprintf(stderr, "Unknown command given to qthread.\n");
     }
 }
 
-void stateInMemoryOrNot(Queue *q, Element *element) {
+
+void deleteStateIfMemFull(Queue *q, Element *element) {
     if (q->in_mem >= MAXINMEMORY) {
         free(element->state);
         element->state = NULL;
@@ -62,3 +59,13 @@ void stateInMemoryOrNot(Queue *q, Element *element) {
         q->in_mem++;
     }
 }
+
+void restoreStateIfItWasDeleted(Queue *q, Element *dequeuedElement) {
+    if (dequeuedElement->state == NULL) {
+        dequeuedElement->state = restoreOneState(dequeuedElement);
+        q->not_in_mem--;
+    } else {
+        q->in_mem--;
+    }
+}
+

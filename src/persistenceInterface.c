@@ -3,30 +3,30 @@
 #include "fileHandler.h"
 #include "sqliteDatabase.h"
 
-void persistOneState(char *state, size_t len, const char digest[HASH_LEN]) {
+void persistOneState(Element *element) {
 #ifdef FILEHANDLER
-    writeOneStateToFileStorage(state, len, digest);
+    writeOneStateToFileStorage(element->state, element->stateLength, element->digest);
 #endif
 #ifdef SQLITE
-    writeOneStateToSQLiteDatabase(state, len, digest);
+    writeOneStateToSQLiteDatabase(element->state, element->stateLength, element->digest);
 #endif
 }
 
-char *restoreOneState(const char digest[HASH_LEN], const size_t oldLen) {
+char *restoreOneState(Element *element) {
 #ifdef FILEHANDLER
-    return restoreOneStateFromFileStorage(digest, oldLen);
+    return restoreOneStateFromFileStorage(element->digest, element->stateLength);
 #endif
 #ifdef SQLITE
-    return restoreOneStateFromSQLiteDatabase(digest, oldLen);
+    return restoreOneStateFromSQLiteDatabase(element->digest, element->stateLength);
 #endif
 }
 
-void deleteOneState(const char digest[HASH_LEN]) {
+void deleteOneStateFromPersistentStorage(Element *element) {
 #ifdef FILEHANDLER
-    deleteOneStateFromFileStorage(digest);
+    deleteOneStateFromFileStorage(element->digest);
 #endif
 #ifdef SQLITE
-    deleteOneStateFromSQLiteDatabse(digest);
+    deleteOneStateFromSQLiteDatabse(element->digest);
 #endif
 }
 
