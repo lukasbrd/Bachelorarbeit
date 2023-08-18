@@ -2,7 +2,7 @@
 #include <sqlite3.h>
 
 
-void writeOneStateToSQLiteDatabase(char *const state, const size_t len, const char digest[HASH_LEN]) {
+void writeOneStateToSQLiteDatabase(char *state, size_t len, const char digest[HASH_LEN]) {
     sqlite3 *db;
     sqlite3_stmt *stmt = NULL;
     char *err_msg = 0;
@@ -73,7 +73,7 @@ void writeOneStateToSQLiteDatabase(char *const state, const size_t len, const ch
     sqlite3_close(db);
 }
 
-char *readOneStateFromSQLiteDatabase(const char digest[HASH_LEN], const size_t oldLen) {
+char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldLen) {
     sqlite3 *db;
     sqlite3_stmt *stmt = NULL;
     char databaseDigest[HASH_LEN];
@@ -246,7 +246,6 @@ void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *const q)
 
         sendAndPersist(command, state, RESTORED, q);
     }
-
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 }

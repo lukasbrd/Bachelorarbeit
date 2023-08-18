@@ -1,6 +1,6 @@
 #include "fileHandler.h"
 
-void writeOneStateToFileStorage(char *const state, const size_t len, const char digest[HASH_LEN]) {
+void writeOneStateToFileStorage(char *state, size_t len, const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
@@ -25,7 +25,7 @@ void writeOneStateToFileStorage(char *const state, const size_t len, const char 
     close(fd);
 }
 
-char *readOneStateFromFileStorage(const char digest[HASH_LEN], const size_t oldLen) {
+char *restoreOneStateFromFileStorage(const char digest[HASH_LEN], size_t oldLen) {
     char readableHash[READABLE_HASH_LEN];
     char fileDigest[HASH_LEN];
     char newDigest[HASH_LEN];

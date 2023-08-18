@@ -1,6 +1,7 @@
 #include "communication.h"
 #include "persistenceInterface.h"
 #include "settings.h"
+#include "queue.h"
 
 void sendAndPersist(zsock_t *commandSocket, char *state, int cmd, Queue *q) {
     q->qLength++;
@@ -15,3 +16,4 @@ Element *receiveAndRestore(zsock_t *commandSocket, zsock_t *packageSocket, Queue
     q->qLength--;
     return receivedElement;
 }
+

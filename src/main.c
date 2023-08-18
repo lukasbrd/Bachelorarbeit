@@ -18,7 +18,8 @@ int main(void) {
         pthread_cond_wait(&condition, &mutex);
     }
     pthread_mutex_unlock(&mutex);
-    restoreAllStates(commandSocket, q);
+
+    restoreAllStatesToQueue(commandSocket, q);
 
     srand(1);
     for (int i = 1; i <= NUMBEROFSTATES; i++) {
@@ -27,10 +28,10 @@ int main(void) {
         sendAndPersist(commandSocket, state, ENQUEUE, q);
     }
     while (q->qLength > 0) {
-        Element *receivedElement = NULL;
+        Element *receivedElement;
         receivedElement = receiveAndRestore(commandSocket, packageSocket, q);
-        printf("State: %s\n", receivedElement->state);
         deleteOneState(receivedElement->digest);
+        printf("State: %s\n", receivedElement->state);
         free(receivedElement->state);
         free(receivedElement);
     }

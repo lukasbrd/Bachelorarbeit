@@ -28,11 +28,12 @@ typedef struct Queue {
     int not_in_mem;
 } Queue;
 
-void enqueue(Queue *const q, Element *element);
-Element *dequeue(Queue *const q);
+void enqueue(Queue *q, Element *element);
+Element *dequeue(Queue *q);
 Queue *initQueue();
 Element *createElement(char *state);
+char *getState(Element *receivedElement);
 void printElement(Element *element);
-void printAllStatesOfElements(Queue const *const q);
+void printAllStatesOfElements(Queue const *q);
 
 #endif

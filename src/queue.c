@@ -47,7 +47,7 @@ void printAllStatesOfElements(Queue const *const q) {
         printf("Text: %s\n", tmp->state);
         tmp = tmp->next;
     }
-}*/
+}
 
 void printElement(Element *element) {
     //char digestmain[HASH_LEN + 1];
@@ -56,4 +56,4 @@ void printElement(Element *element) {
     //memcpy(digestmain, element->digest, HASH_LEN);
     //digestmain[HASH_LEN] = '\0';
     //printf("digest:%s\n", digestmain);
-}
+}*/

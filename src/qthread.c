@@ -22,32 +22,43 @@ void *qthread(void *args) {
         Element *element = NULL;
         zsock_recv(commandSocket, "ip", &cmd, &element);
 
-        if (cmd == ENQUEUE || cmd == RESTORED) {
-            if(cmd == ENQUEUE) {
-                persistOneState(element->state, element->stateLength, element->digest);
-            }
-            if (q->in_mem >= MAXINMEMORY) {
-                free(element->state);
-                element->state = NULL;
-                q->not_in_mem++;
-            } else {
-                q->in_mem++;
-            }
+        if(cmd == ENQUEUE) {
+            persistOneState(element->state, element->stateLength, element->digest);
+            stateInMemoryOrNot(q, element);
+            enqueue(q, element);
+        } else if (cmd == RESTORED) {
+            stateInMemoryOrNot(q, element);
             enqueue(q, element);
         } else if (cmd == DEQUEUE) {
             Element *dequeuedElement = NULL;
             dequeuedElement = dequeue(q);
-            if (dequeuedElement->state == NULL) {
-                dequeuedElement->state = restoreOneState(dequeuedElement->digest, dequeuedElement->stateLength);
-                q->not_in_mem--;
-            } else {
-                q->in_mem--;
-            }
+            restoreStateIfNecessary(q, dequeuedElement);
             zsock_send(packageSocket, "p", dequeuedElement);
         } else if (cmd == TERMINATE) {
             zsock_destroy(&commandSocket);
             zsock_destroy(&packageSocket);
             pthread_exit(0);
+        } else {
+            fprintf(stderr, "Unknown command given to qthread.\n");
         }
+    }
+}
+
+void restoreStateIfNecessary(Queue *q, Element *dequeuedElement) {
+    if (dequeuedElement->state == NULL) {
+        dequeuedElement->state = restoreOneState(dequeuedElement->digest, dequeuedElement->stateLength);
+        q->not_in_mem--;
+    } else {
+        q->in_mem--;
+    }
+}
+
+void stateInMemoryOrNot(Queue *q, Element *element) {
+    if (q->in_mem >= MAXINMEMORY) {
+        free(element->state);
+        element->state = NULL;
+        q->not_in_mem++;
+    } else {
+        q->in_mem++;
     }
 }
