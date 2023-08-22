@@ -2,6 +2,7 @@
 #define SQLITEDATABASE
 
 #include "communication.h"
+#include "qthread.h"
 #include "hash.h"
 #include "queue.h"
 #include <assert.h>

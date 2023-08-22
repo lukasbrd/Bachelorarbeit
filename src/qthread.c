@@ -8,7 +8,7 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void commandReceiver(zsock_t **commandSocket, zsock_t **packageSocket, Queue *q, int cmd, Element *element);
 
-_Noreturn void *qthread(void *args) {
+void *qthread(void *args) {
     zsock_t *commandSocket = zsock_new_pull("inproc://command");
     zsock_t *packageSocket = zsock_new_push("inproc://package");
 
@@ -45,10 +45,9 @@ void commandReceiver(zsock_t **commandSocket, zsock_t **packageSocket, Queue *q,
         zsock_destroy(packageSocket);
         pthread_exit(0);
     } else {
-        fprintf(stderr, "Unknown command given to qthread.\n");
+        fprintf(stderr, "Unknown command given to qthread: %d\n", cmd);
     }
 }
-
 
 void deleteStateIfMemFull(Queue *q, Element *element) {
     if (q->in_mem >= MAXINMEMORY) {

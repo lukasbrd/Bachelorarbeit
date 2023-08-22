@@ -8,11 +8,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define ENQUEUE 1
-#define RESTORED 2
-#define DEQUEUE 3
-#define TERMINATE 4
-
 typedef struct Element {
     char *state;
     char digest[HASH_LEN];

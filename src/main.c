@@ -11,8 +11,10 @@ int main(void) {
     zsock_t *commandSocket = zsock_new_push("inproc://command");
     zsock_t *packageSocket = zsock_new_pull("inproc://package");
     Queue *q = initQueue();
+
     pthread_t thread;
     pthread_create(&thread, NULL, qthread, (void *)q);
+
     pthread_mutex_lock(&mutex);
     while (!threadRunning) {
         pthread_cond_wait(&condition, &mutex);
@@ -21,15 +23,15 @@ int main(void) {
 
     restoreAllStatesToQueue(commandSocket, q);
 
-    srand(1);
+    srand(0);
     for (int i = 1; i <= NUMBEROFSTATES; i++) {
         char *state = createState(i);
         printf("StateStart:%s\n", state);
-        sendAndPersist(commandSocket, state, ENQUEUE, q);
+        sendElement(commandSocket, state, ENQUEUE, q);
     }
     while (q->qLength > 0) {
         Element *receivedElement;
-        receivedElement = receiveAndRestore(commandSocket, packageSocket, q);
+        receivedElement = receiveElement(commandSocket, packageSocket, q);
         deleteOneStateFromPersistentStorage(receivedElement);
         printf("State: %s\n", receivedElement->state);
         free(receivedElement->state);

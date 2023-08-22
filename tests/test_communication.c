@@ -40,7 +40,7 @@ void test_sendAndPersist(void **state) {
     expect_value(__wrap_zsock_send, cmd, testcmd);
     expect_any(__wrap_zsock_send, cell);
 
-    sendAndPersist(commandSocket, testterm, testcmd, q);
+    sendElement(commandSocket, testterm, testcmd, q);
 
     zsock_destroy(&commandSocket);
     free(q);

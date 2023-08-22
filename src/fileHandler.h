@@ -4,6 +4,7 @@
 #include "hash.h"
 #include "queue.h"
 #include "communication.h"
+#include "qthread.h"
 #include <assert.h>
 #include <dirent.h>
 #include <fcntl.h>

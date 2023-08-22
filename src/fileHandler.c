@@ -11,7 +11,7 @@ void writeOneStateToFileStorage(char *state, size_t len, const char digest[HASH_
     strcat(dir, readableHash);
 
     if ((fd = open(dir, O_WRONLY | O_CREAT | O_TRUNC, 00600)) == -1) {
-        fprintf(stderr, "Error opening file1: '%s': %s\n", dir, strerror(errno));
+        fprintf(stderr, "Error opening file: '%s': %s\n", dir, strerror(errno));
         return;
     }
 
@@ -41,7 +41,7 @@ char *restoreOneStateFromFileStorage(const char digest[HASH_LEN], size_t oldLen)
     strcat(dir, readableHash);
 
     if ((fd = open(dir, O_RDONLY, 00600)) == -1) {
-        fprintf(stderr, "There is no file for this hash: '%s': %s\n", dir, strerror(errno));
+        fprintf(stderr, "There is no file found for this digest: '%s': %s\n", dir, strerror(errno));
         return NULL;
     }
 
@@ -50,7 +50,8 @@ char *restoreOneStateFromFileStorage(const char digest[HASH_LEN], size_t oldLen)
     memcpy(&len, buf + 20, sizeof(size_t));
 
     if (len != oldLen) {
-        fprintf(stderr, "The old stateLength is different than the restored stateLength.\n");
+        fprintf(stderr, "The old stateLength is different from the restored stateLength.\n");
+        return NULL;
     }
 
     state = (char *)malloc(sizeof(char) * (len + 1));
@@ -61,6 +62,7 @@ char *restoreOneStateFromFileStorage(const char digest[HASH_LEN], size_t oldLen)
     hash(state, (int) len, newDigest);
     if (memcmp(fileDigest, newDigest , HASH_LEN) != 0) {
         fprintf(stderr, "The State was corrupted.\n ");
+        return NULL;
     }
     return state;
 }
@@ -108,8 +110,9 @@ void restoreAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
                 hash(state, (int) len, newDigest);
                 if (memcmp(fileDigest, newDigest , HASH_LEN) != 0) {
                     fprintf(stderr, "The State was corrupted.\n ");
+                } else {
+                    sendElement(command, state, RESTORED, q);
                 }
-                sendAndPersist(command, state, RESTORED, q);
                 close(fd);
             }
         }
