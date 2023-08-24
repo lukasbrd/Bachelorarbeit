@@ -8,16 +8,9 @@ void test_init_cell(void **state);
 void test_enqueueOneTerm(void **state);
 void test_enqueueTwoTerms(void **state);
 void test_dequeueOneTerm(void **state);
-
-
-void test_sendAndPersist(void **state);
-
-
+void test_sendElement(void **state);
 
 void __wrap_persistOneTerm(const char *term, int term_length, const char *digest);
 void __wrap_zsock_send(zsock_t *commandSocket, const char *picture, int cmd, Element *cell );
-
-
-
 
 #endif

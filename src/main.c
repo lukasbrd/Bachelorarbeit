@@ -21,7 +21,7 @@ int main(void) {
     }
     pthread_mutex_unlock(&mutex);
 
-    restoreAllStatesToQueue(commandSocket, q);
+    //restoreAllStatesToQueue(commandSocket, q);
 
     srand(0);
     for (int i = 1; i <= NUMBEROFSTATES; i++) {

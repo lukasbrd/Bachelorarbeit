@@ -81,7 +81,6 @@ void test_dequeueOneTerm(void **state) {
     assert_int_equal(res->stateLength, strlen(testterm));
     assert_null(res->next);
 
-    // Cleanup
     free(cell1);
     free(q);
 }

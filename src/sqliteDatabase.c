@@ -6,7 +6,9 @@ void writeOneStateToSQLiteDatabase(char *state, size_t len, const char digest[HA
     sqlite3 *db;
     sqlite3_stmt *stmt = NULL;
     char *err_msg = 0;
-    int rc = sqlite3_open("queue.db", &db);
+
+    mkdir("build/database",0700);
+    int rc = sqlite3_open("build/database/queue.db", &db);
 
     // database connection
     if (rc != SQLITE_OK) {
@@ -83,7 +85,9 @@ char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldL
     char *state = NULL;
     char *err_msg = 0;
 
-    int rc = sqlite3_open("queue.db", &db);
+    mkdir("build/database",0700);
+    int rc = sqlite3_open("build/database/queue.db", &db);
+
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database %d: %s\n", rc, sqlite3_errmsg(db));
         sqlite3_close(db);
@@ -160,7 +164,9 @@ void deleteOneStateFromSQLiteDatabse(const char digest[HASH_LEN]) {
     sqlite3 *db;
     sqlite3_stmt *stmt = NULL;
     char *err_msg = 0;
-    int rc = sqlite3_open("queue.db", &db);
+
+    mkdir("build/database",0700);
+    int rc = sqlite3_open("build/database/queue.db", &db);
 
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -215,7 +221,8 @@ void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *const q)
     sqlite3_stmt *stmt = NULL;
     char *err_msg = 0;
 
-    int rc = sqlite3_open("queue.db", &db);
+    mkdir("build/database",0700);
+    int rc = sqlite3_open("build/database/queue.db", &db);
 
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
