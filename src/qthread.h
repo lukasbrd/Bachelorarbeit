@@ -15,5 +15,6 @@ extern pthread_mutex_t mutex;
 _Noreturn void *qthread(void *args);
 void deleteStateIfMemFull(Queue *q, Element *element);
 void restoreStateIfItWasDeleted(Queue *q, Element *dequeuedElement);
+void commandReceiver(zsock_t **commandSocket, zsock_t **packageSocket, Queue *q, int cmd, Element *element);
 
 #endif 

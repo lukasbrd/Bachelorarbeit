@@ -26,7 +26,7 @@ void deleteOneStateFromPersistentStorage(Element *element) {
     deleteOneStateFromFileStorage(element->digest);
 #endif
 #ifdef SQLITE
-    deleteOneStateFromSQLiteDatabse(element->digest);
+    deleteOneStateFromSQLiteDatabase(element->digest);
 #endif
 }
 

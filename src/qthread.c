@@ -6,7 +6,7 @@ volatile bool threadRunning = false;
 pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void commandReceiver(zsock_t **commandSocket, zsock_t **packageSocket, Queue *q, int cmd, Element *element);
+
 
 void *qthread(void *args) {
     zsock_t *commandSocket = zsock_new_pull("inproc://command");

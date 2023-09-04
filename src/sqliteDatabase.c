@@ -1,14 +1,24 @@
 #include "sqliteDatabase.h"
 #include <sqlite3.h>
 
-
 void writeOneStateToSQLiteDatabase(char *state, size_t len, const char digest[HASH_LEN]) {
     sqlite3 *db;
     sqlite3_stmt *stmt = NULL;
     char *err_msg = 0;
 
-    mkdir("build/database",0700);
-    int rc = sqlite3_open("build/database/queue.db", &db);
+    mkdir("database",0700);
+    char databasePath[18];
+
+    strcpy(databasePath,"database/");
+
+#ifdef TESTING
+    char *databaseName = "test.db";
+#else
+    char *databaseName = "queue.db";
+#endif
+
+    strcat(databasePath,databaseName);
+    int rc = sqlite3_open(databasePath, &db);
 
     // database connection
     if (rc != SQLITE_OK) {
@@ -63,14 +73,16 @@ void writeOneStateToSQLiteDatabase(char *state, size_t len, const char digest[HA
     }
 
     // execute statement
+    // Bei rc==19 gilt: Zustand ist schon im Speicher und soll nicht doppelt abgelegt werden
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
-        fprintf(stderr, "Execution failed %d: %s\n", rc, sqlite3_errmsg(db));
+        if (rc != 19) {
+            fprintf(stderr, "Execution failed %d: %s\n", rc, sqlite3_errmsg(db));
+        }
         sqlite3_finalize(stmt);
         sqlite3_close(db);
         return;
     }
-
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 }
@@ -85,8 +97,18 @@ char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldL
     char *state = NULL;
     char *err_msg = 0;
 
-    mkdir("build/database",0700);
-    int rc = sqlite3_open("build/database/queue.db", &db);
+    mkdir("database",0700);
+    char databasePath[18];
+    strcpy(databasePath,"database/");
+
+#ifdef TESTING
+    char *databaseName = "test.db";
+#else
+    char *databaseName = "queue.db";
+#endif
+
+    strcat(databasePath,databaseName);
+    int rc = sqlite3_open(databasePath, &db);
 
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database %d: %s\n", rc, sqlite3_errmsg(db));
@@ -124,9 +146,10 @@ char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldL
     }
 
     // execute statement
+    // Bei rc == SQLITE_ROW wurde eine Zeile mit dem hash gefunden.
+    // Bei rc == SQLite_DONE wurde keine Zeile mit dem hash gefunden. Daher wird NULL zurückgegeben.
     rc = sqlite3_step(stmt);
-    if (rc != SQLITE_ROW) {
-        fprintf(stderr, "No data found for this digest: %s: %s\n", digest, sqlite3_errmsg(db));
+    if (rc == SQLITE_DONE) {
         sqlite3_finalize(stmt);
         sqlite3_close(db);
         return NULL;
@@ -160,13 +183,24 @@ char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldL
     return state;
 }
 
-void deleteOneStateFromSQLiteDatabse(const char digest[HASH_LEN]) {
+void deleteOneStateFromSQLiteDatabase(const char digest[HASH_LEN]) {
     sqlite3 *db;
     sqlite3_stmt *stmt = NULL;
     char *err_msg = 0;
 
-    mkdir("build/database",0700);
-    int rc = sqlite3_open("build/database/queue.db", &db);
+    mkdir("database",0700);
+    char databasePath[18];
+    strcpy(databasePath,"database/");
+
+#ifdef TESTING
+    char *databaseName = "test.db";
+#else
+    char *databaseName = "queue.db";
+#endif
+
+    strcat(databasePath,databaseName);
+
+    int rc = sqlite3_open(databasePath, &db);
 
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -205,6 +239,7 @@ void deleteOneStateFromSQLiteDatabse(const char digest[HASH_LEN]) {
     }
 
     // execute statement
+    // Wird keine passende Zeile gefunden, wird auch SQLite_DONE zurückgegeben.
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
         fprintf(stderr, "Cannot delete row: %d: %s\n", rc, sqlite3_errmsg(db));
@@ -221,8 +256,18 @@ void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *const q)
     sqlite3_stmt *stmt = NULL;
     char *err_msg = 0;
 
-    mkdir("build/database",0700);
-    int rc = sqlite3_open("build/database/queue.db", &db);
+    mkdir("database",0700);
+    char databasePath[18];
+    strcpy(databasePath,"database/");
+
+#ifdef TESTING
+    char *databaseName = "test.db";
+#else
+    char *databaseName = "queue.db";
+#endif
+
+    strcat(databasePath,databaseName);
+    int rc = sqlite3_open(databasePath, &db);
 
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));

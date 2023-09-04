@@ -1,17 +1,17 @@
 #include "fileHandler.h"
 
+
 void writeOneStateToFileStorage(char *state, size_t len, const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
     int fd;
 
-    mkdir("storage", 0700);
+    mkdir("files", 0700);
 
-    char dir[41] = "storage/";
+    char dir[47] = "files/";
     strcat(dir, readableHash);
 
-    if ((fd = open(dir, O_WRONLY | O_CREAT | O_TRUNC, 00600)) == -1) {
-        fprintf(stderr, "Error opening file: '%s': %s\n", dir, strerror(errno));
+    if ((fd = open(dir, O_WRONLY | O_CREAT | O_EXCL, 00600)) == -1) {
         return;
     }
 
@@ -35,13 +35,12 @@ char *restoreOneStateFromFileStorage(const char digest[HASH_LEN], size_t oldLen)
     char buf[28];
     char *state;
 
-    mkdir("storage", 0700);
+    mkdir("files", 0700);
 
-    char dir[41] = "storage/";
+    char dir[47] = "files/";
     strcat(dir, readableHash);
 
     if ((fd = open(dir, O_RDONLY, 00600)) == -1) {
-        fprintf(stderr, "There is no file found for this digest: '%s': %s\n", dir, strerror(errno));
         return NULL;
     }
 
@@ -71,17 +70,11 @@ void deleteOneStateFromFileStorage(const char digest[HASH_LEN]) {
     char readableHash[READABLE_HASH_LEN];
     print_readable_digest(digest, readableHash);
 
-    mkdir("storage", 0700);
+    mkdir("files", 0700);
 
-    char dir[41] = "storage/";
+    char dir[47] = "files/";
     strcat(dir, readableHash);
-
-    int del = remove(dir);
-    if (del == 0) {
-        return;
-    } else {
-        fprintf(stderr, "Error deleting file: %s\n", strerror(errno));
-    }
+    remove(dir);
 }
 
 void restoreAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
@@ -94,9 +87,9 @@ void restoreAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
     DIR *dir;
     struct dirent *dp;
 
-    mkdir("storage", 0700);
+    mkdir("files", 0700);
 
-    dir = opendir("storage/");
+    dir = opendir("files/");
     if (dir != NULL) {
         while ((dp = readdir(dir))) {
             if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
