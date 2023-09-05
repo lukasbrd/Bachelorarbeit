@@ -24,21 +24,29 @@ int main(void) {
 
     //restoreAllStatesToQueue(commandSocket, q);
 
-    srand(0);
-    for (int i = 1; i <= NUMBEROFSTATES; i++) {
-        char *state = createState(i);
-        printf("StateStart:%s\n", state);
-        sendElement(commandSocket, state, ENQUEUE, q);
-    }
+    int a = NUMBEROFSTATES;
+    int c = 1;
+    do {
+        if (a > 0) {
+            for (int b = 1; b <= a; b++) {
+                char *state = createState(b);
+                //printf("StateStart:%s\n", state);
+                sendElement(commandSocket, state, ENQUEUE, q);
+            }
+        }
+        for(int d = 1; d <= c; d++) {
+            Element *receivedElement;
+            receivedElement = receiveElement(commandSocket, packageSocket, q);
+            deleteOneStateFromPersistentStorage(receivedElement);
+            //printf("State: %s\n", receivedElement->state);
+            free(receivedElement->state);
+            free(receivedElement);
+        }
+        a = a-1;
+        c = c+1;
+        printf("queueLength:%d\n\n",q->qLength);
+    } while(q->qLength > 0);
 
-    while (q->qLength > 0) {
-        Element *receivedElement;
-        receivedElement = receiveElement(commandSocket, packageSocket, q);
-        deleteOneStateFromPersistentStorage(receivedElement);
-        printf("State: %s\n", receivedElement->state);
-        free(receivedElement->state);
-        free(receivedElement);
-    }
     zsock_send(commandSocket, "ip", TERMINATE, NULL);
     pthread_join(thread, NULL);
     zsock_destroy(&commandSocket);

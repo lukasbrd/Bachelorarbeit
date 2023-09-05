@@ -29,6 +29,7 @@ void *qthread(void *args) {
 
 void commandReceiver(zsock_t **commandSocket, zsock_t **packageSocket, Queue *q, int cmd, Element *element) {
     if(cmd == ENQUEUE) {
+        usleep(10000);
         persistOneState(element);
         deleteStateIfMemFull(q, element);
         enqueue(q, element);
