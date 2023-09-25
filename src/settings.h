@@ -1,16 +1,19 @@
+// Uncomment the constant to restore all states in the persistent Storage to Queue.
+// #define RESTOREALLSTATESTOQUEUE
+
 // Decide how many states are created.
 #define NUMBEROFSTATES 100
 
-// Decide how long the states should be.
-#define MAXADDEDLENGTH 10
+// Decide how long the states can become.
+#define MAXADDEDLENGTH 100
 
 // Decide how many states should stay in memory.
-#define MAXINMEMORY 5
+#define MAXINMEMORY 50
 
-// Choose the Persistence-Mode of the Program by uncommenting one constant.
+// Uncomment one constant to choose the persistence-mode of the program.
 //#define FILEHANDLER
 #define SQLITE
-
+//#define BERKELEYDB
 
 
 

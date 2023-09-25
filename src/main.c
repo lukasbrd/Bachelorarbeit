@@ -22,12 +22,14 @@ int main(void) {
     }
     pthread_mutex_unlock(&mutex);
 
-    //restoreAllStatesToQueue(commandSocket, q);
+#ifdef RESTOREALLSTATESTOQUEUE
+    restoreAllStatesToQueue(commandSocket, q);
+#endif
 
     srand(0);
     for (int i = 1; i <= NUMBEROFSTATES; i++) {
         char *state = createState(i);
-        printf("StateStart:%s\n", state);
+        //printf("Start:%s\n", state);
         sendElement(commandSocket, state, ENQUEUE, q);
     }
 
@@ -35,7 +37,7 @@ int main(void) {
         Element *receivedElement;
         receivedElement = receiveElement(commandSocket, packageSocket, q);
         deleteOneStateFromPersistentStorage(receivedElement);
-        printf("State: %s\n", receivedElement->state);
+        //printf("Ende: %s\n", receivedElement->state);
         free(receivedElement->state);
         free(receivedElement);
     }

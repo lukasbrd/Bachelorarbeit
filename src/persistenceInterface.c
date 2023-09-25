@@ -1,7 +1,9 @@
 #include "persistenceInterface.h"
 #include "settings.h"
+#include "berkeleyDB.h"
 #include "fileHandler.h"
-#include "sqliteDatabase.h"
+#include "sqliteDB.h"
+
 
 void persistOneState(Element *element) {
 #ifdef FILEHANDLER
@@ -9,6 +11,9 @@ void persistOneState(Element *element) {
 #endif
 #ifdef SQLITE
     writeOneStateToSQLiteDatabase(element->state, element->stateLength, element->digest);
+#endif
+#ifdef BERKELEYDB
+    writeOneStateToBerkeleyDB(element->state, element->stateLength, element->digest);
 #endif
 }
 
@@ -19,6 +24,9 @@ char *restoreOneState(Element *element) {
 #ifdef SQLITE
     return restoreOneStateFromSQLiteDatabase(element->digest, element->stateLength);
 #endif
+#ifdef BERKELEYDB
+    return restoreOneStateFromBerkeleyDB(element->digest, element->stateLength);
+#endif
 }
 
 void deleteOneStateFromPersistentStorage(Element *element) {
@@ -28,6 +36,9 @@ void deleteOneStateFromPersistentStorage(Element *element) {
 #ifdef SQLITE
     deleteOneStateFromSQLiteDatabase(element->digest);
 #endif
+#ifdef BERKELEYDB
+    deleteOneStateFromBerkeleyDB(element->digest);
+#endif
 }
 
 void restoreAllStatesToQueue(zsock_t *command, Queue *const q) {
@@ -36,5 +47,8 @@ void restoreAllStatesToQueue(zsock_t *command, Queue *const q) {
 #endif
 #ifdef SQLITE
     restoreAllStatesFromSQLiteDatabaseToQueue(command, q);
+#endif
+#ifdef BERKELEYDB
+    restoreAllStatesFromBerkeleyDBToQueue(command, q);
 #endif
 }

@@ -61,6 +61,7 @@ char *restoreOneStateFromFileStorage(const char digest[HASH_LEN], size_t oldLen)
     hash(state, (int) len, newDigest);
     if (memcmp(fileDigest, newDigest , HASH_LEN) != 0) {
         fprintf(stderr, "The State was corrupted.\n ");
+        free(state);
         return NULL;
     }
     return state;
@@ -103,6 +104,7 @@ void restoreAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
                 hash(state, (int) len, newDigest);
                 if (memcmp(fileDigest, newDigest , HASH_LEN) != 0) {
                     fprintf(stderr, "The State was corrupted.\n ");
+                    free(state);
                 } else {
                     sendElement(command, state, RESTORED, q);
                 }
