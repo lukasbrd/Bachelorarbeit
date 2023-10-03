@@ -1,7 +1,6 @@
 #include "berkeleyDB.h"
 #include <db.h>
 
-
 void writeOneStateToBerkeleyDB(char *state, size_t len, char digest[HASH_LEN]){
     DB *db;
     int rc;
@@ -13,7 +12,7 @@ void writeOneStateToBerkeleyDB(char *state, size_t len, char digest[HASH_LEN]){
         return;
     }
 
-    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_BTREE, DB_CREATE, 0600);
+    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_HASH, DB_CREATE, 0600);
     if (rc != 0) {
         fprintf(stderr, "Error: %s\n", db_strerror(rc));
         return;
@@ -48,7 +47,7 @@ char *restoreOneStateFromBerkeleyDB(char digest[HASH_LEN], size_t oldLen) {
         return NULL;
     }
 
-    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_BTREE, DB_RDONLY, 0);
+    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_HASH, DB_RDONLY, 0);
     if (rc != 0) {
         fprintf(stderr, "Error opening Berkeley DB\n");
         return NULL;
@@ -60,9 +59,9 @@ char *restoreOneStateFromBerkeleyDB(char digest[HASH_LEN], size_t oldLen) {
     key.data = digest;
     key.size = HASH_LEN;
 
+    // if the state is not found, NULL is returned
     rc = db->get(db, NULL, &key, &data, 0);
     if (rc != 0) {
-        fprintf(stderr, "Cannot get data from Berkeley DB\n");
         return NULL;
     }
 
@@ -98,7 +97,7 @@ void deleteOneStateFromBerkeleyDB(char digest[HASH_LEN]) {
         return;
     }
 
-    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_BTREE, 0, 0);
+    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_HASH, 0, 0);
     if (rc != 0) {
         fprintf(stderr, "Error opening BerkeleyDB\n");
         return;
@@ -109,10 +108,8 @@ void deleteOneStateFromBerkeleyDB(char digest[HASH_LEN]) {
     key.data = digest;
     key.size = HASH_LEN;
 
-    rc = db->del(db, NULL, &key, 0);
-    if (rc != 0) {
-        fprintf(stderr, "Cannot delete data from BerkeleyDB\n");
-    }
+    // if the state is already deleted, nothing happens.
+    db->del(db, NULL, &key, 0);
 
     db->close(db, 0);
 }
@@ -131,7 +128,7 @@ void restoreAllStatesFromBerkeleyDBToQueue(zsock_t *command, Queue *const q) {
         return;
     }
 
-    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_BTREE, DB_CREATE, 0);
+    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_HASH, DB_CREATE, 0);
     if (rc != 0) {
         fprintf(stderr, "Error opening BerkeleyDB\n");
         return;
@@ -156,7 +153,7 @@ void restoreAllStatesFromBerkeleyDBToQueue(zsock_t *command, Queue *const q) {
             fprintf(stderr, "The state was corrupted.\n");
             free(state);
         } else {
-            printf("Berkeley:%s\n", state);
+            printf("Restored:%s\n", state);
             sendElement(command, state, RESTORED, q);
         }
     }
