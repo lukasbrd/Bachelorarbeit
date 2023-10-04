@@ -106,6 +106,7 @@ void restoreAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
                     fprintf(stderr, "The State was corrupted.\n ");
                     free(state);
                 } else {
+                    printf("Restored: %s\n", state);
                     sendElement(command, state, RESTORED, q);
                 }
                 close(fd);

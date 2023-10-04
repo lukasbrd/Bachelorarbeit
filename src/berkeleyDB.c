@@ -1,24 +1,37 @@
 #include "berkeleyDB.h"
 #include <db.h>
 
-void writeOneStateToBerkeleyDB(char *state, size_t len, char digest[HASH_LEN]){
-    DB *db;
+DB *berkeleydb = NULL;
+
+void initBerkeleyDB() {
     int rc;
-    mkdir("berkeleyDB",0700);
 
-    rc = db_create(&db, NULL, 0);
+    mkdir("berkeleyDB", 0700);
+
+    rc = db_create(&berkeleydb, NULL, 0);
     if (rc != 0) {
-        fprintf(stderr, "Cannot create BerkeleyDB. \n");
-        return;
+        fprintf(stderr, "Cannot create BerkeleyDB.\n");
+        exit(1);
     }
 
-    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_HASH, DB_CREATE, 0600);
+    rc = berkeleydb->open(berkeleydb, NULL, "berkeleyDB/berkeley.db", NULL, DB_HASH, DB_CREATE, 0600);
     if (rc != 0) {
-        fprintf(stderr, "Error: %s\n", db_strerror(rc));
-        return;
+        fprintf(stderr, "Cannot open BerkeleyDB: %s\n", db_strerror(rc));
+        exit(1);
     }
+}
 
+void closeBerkeleyDB() {
+    if (berkeleydb != NULL) {
+        berkeleydb->close(berkeleydb, 0);
+        berkeleydb = NULL;
+    }
+}
+
+void writeOneStateToBerkeleyDB(char *state, size_t len, char digest[HASH_LEN]){
+    int rc;
     DBT key, data;
+
     memset(&key, 0, sizeof(DBT));
     memset(&data, 0, sizeof(DBT));
     key.data = digest;
@@ -26,41 +39,25 @@ void writeOneStateToBerkeleyDB(char *state, size_t len, char digest[HASH_LEN]){
     data.data = state;
     data.size = len;
 
-    rc = db->put(db, NULL, &key, &data, 0);
+    rc = berkeleydb->put(berkeleydb, NULL, &key, &data, 0);
     if (rc != 0) {
         fprintf(stderr, "Cannot insert data into Berkeley DB\n");
     }
-
-    db->close(db, 0);
 }
 
 char *restoreOneStateFromBerkeleyDB(char digest[HASH_LEN], size_t oldLen) {
-    DB *db;
     int rc;
-    mkdir("berkeleyDB",0700);
     char newDigest[HASH_LEN];
     char *state = NULL;
-
-    rc = db_create(&db, NULL, 0);
-    if (rc != 0) {
-        fprintf(stderr, "Cannot create BerkeleyDB. \n");
-        return NULL;
-    }
-
-    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_HASH, DB_RDONLY, 0);
-    if (rc != 0) {
-        fprintf(stderr, "Error opening Berkeley DB\n");
-        return NULL;
-    }
-
     DBT key, data;
+
     memset(&key, 0, sizeof(DBT));
     memset(&data, 0, sizeof(DBT));
     key.data = digest;
     key.size = HASH_LEN;
 
     // if the state is not found, NULL is returned
-    rc = db->get(db, NULL, &key, &data, 0);
+    rc = berkeleydb->get(berkeleydb, NULL, &key, &data, 0);
     if (rc != 0) {
         return NULL;
     }
@@ -74,8 +71,6 @@ char *restoreOneStateFromBerkeleyDB(char digest[HASH_LEN], size_t oldLen) {
     memcpy(state, data.data, data.size);
     state[data.size] = '\0';
 
-    db->close(db, 0);
-
     hash(state, (int) data.size, newDigest);
     if (memcmp(key.data, newDigest , HASH_LEN) != 0) {
         fprintf(stderr, "The State was corrupted.\n ");
@@ -87,57 +82,25 @@ char *restoreOneStateFromBerkeleyDB(char digest[HASH_LEN], size_t oldLen) {
 
 
 void deleteOneStateFromBerkeleyDB(char digest[HASH_LEN]) {
-    DB *db;
-    int rc;
-    mkdir("berkeleyDB", 0700);
-
-    rc = db_create(&db, NULL, 0);
-    if (rc != 0) {
-        fprintf(stderr, "Cannot create BerkeleyDB. \n");
-        return;
-    }
-
-    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_HASH, 0, 0);
-    if (rc != 0) {
-        fprintf(stderr, "Error opening BerkeleyDB\n");
-        return;
-    }
-
     DBT key;
+
     memset(&key, 0, sizeof(DBT));
     key.data = digest;
     key.size = HASH_LEN;
 
     // if the state is already deleted, nothing happens.
-    db->del(db, NULL, &key, 0);
-
-    db->close(db, 0);
+    berkeleydb->del(berkeleydb, NULL, &key, 0);
 }
 
 
 void restoreAllStatesFromBerkeleyDBToQueue(zsock_t *command, Queue *const q) {
-    DB *db;
     DBT key, data;
     DBC *cursor;
-    int rc = 0;
-    mkdir("berkeleyDB", 0700);
-
-    rc = db_create(&db, NULL, 0);
-    if (rc != 0) {
-        fprintf(stderr, "Cannot create BerkeleyDB. \n");
-        return;
-    }
-
-    rc = db->open(db, NULL, "berkeleyDB/berkeley.db", NULL, DB_HASH, DB_CREATE, 0);
-    if (rc != 0) {
-        fprintf(stderr, "Error opening BerkeleyDB\n");
-        return;
-    }
 
     memset(&key, 0, sizeof(DBT));
     memset(&data, 0, sizeof(DBT));
 
-    db->cursor(db, NULL, &cursor, 0);
+    berkeleydb->cursor(berkeleydb, NULL, &cursor, 0);
 
     while(cursor->c_get(cursor, &key, &data, DB_NEXT) == 0) {
         char databaseDigest[HASH_LEN];
@@ -158,5 +121,4 @@ void restoreAllStatesFromBerkeleyDBToQueue(zsock_t *command, Queue *const q) {
         }
     }
     cursor->c_close(cursor);
-    db->close(db, 0);
 }

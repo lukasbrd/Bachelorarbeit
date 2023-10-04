@@ -23,7 +23,6 @@ void test_sendElement(void **state) {
     Queue *q = initQueue();
     char *term = "term";
     zsock_t *commandSocket = zsock_new_push("inproc://pushtest");
-    Element *element = createElement(term);
 
     expect_any(__wrap_zsock_send, commandSocket);
     expect_string(__wrap_zsock_send, picture, "ip");
@@ -40,8 +39,7 @@ void test_sendElement(void **state) {
 void test_receiveElement(void **state) {
     Queue *q = initQueue();
     q->qLength = 1;
-    void *element = NULL;
-    Element *receivedElement = NULL;
+
     zsock_t *commandSocket = zsock_new_push("inproc://pushtest");
     zsock_t *packageSocket = zsock_new_pull("inproc://pulltest");
 
@@ -49,7 +47,6 @@ void test_receiveElement(void **state) {
     expect_string(__wrap_zsock_send, picture, "ip");
     expect_value(__wrap_zsock_send, cmd, DEQUEUE);
     expect_any(__wrap_zsock_send, element);
-
 
     expect_any(__wrap_zsock_recv, packageSocket);
     expect_string(__wrap_zsock_recv, picture, "p");

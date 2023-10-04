@@ -17,6 +17,7 @@ void writeOneStateToSQLiteDatabase(char *state, size_t len, const char digest[HA
 char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldLen);
 void deleteOneStateFromSQLiteDatabase(char digest[HASH_LEN]);
 void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *q);
-sqlite3 *getSqliteDB();
+void initSqliteDB();
+void closeSQLiteDB();
 
 #endif

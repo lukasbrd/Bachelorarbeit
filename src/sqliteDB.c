@@ -1,74 +1,70 @@
 #include "sqliteDB.h"
 
-sqlite3 *getSqliteDB() {
-    sqlite3 *db;
+sqlite3 *sqlitedb = NULL;
+
+void initSqliteDB() {
     int rc;
     char *err_msg = 0;
 
     mkdir("sqliteDB", 0700);
 
     // database connection
-    rc = sqlite3_open("sqliteDB/sqlite.db", &db);
+    rc = sqlite3_open("sqliteDB/sqlite.db", &sqlitedb);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot open database: %d: %s\n", rc, sqlite3_errmsg(db));
-        sqlite3_close(db);
-        return NULL;
+        fprintf(stderr, "Cannot open database: %d: %s\n", rc, sqlite3_errmsg(sqlitedb));
+        exit(1);
     }
 
     // create table if not exists
     const char *sql = "CREATE TABLE IF NOT EXISTS state(digest BLOB PRIMARY KEY, len INT, state TEXT);";
-    rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
+    rc = sqlite3_exec(sqlitedb, sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot create table: %d: %s\n", rc, sqlite3_errmsg(db));
-        sqlite3_close(db);
-        return NULL;
+        fprintf(stderr, "Cannot create table: %d: %s\n", rc, sqlite3_errmsg(sqlitedb));
+        sqlite3_close(sqlitedb);
+        exit(1);
     }
-    return db;
+}
+
+void closeSQLiteDB() {
+    if (sqlitedb != NULL) {
+        sqlite3_close(sqlitedb);
+        sqlitedb = NULL;
+    }
 }
 
 void writeOneStateToSQLiteDatabase(char *state, size_t len, const char digest[HASH_LEN]) {
-    sqlite3 *db = NULL;
     sqlite3_stmt *stmt = NULL;
     int rc;
-
-    db = getSqliteDB();
-    if(db == NULL) {
-        return;
-    }
 
     // prepare statement
     // if the state already exists in the database, it is not inserted.
     const char *sql2 = "INSERT OR IGNORE INTO state (digest, len, state) VALUES (?,?,?)";
-    rc = sqlite3_prepare_v2(db, sql2, -1, &stmt, NULL);
+    rc = sqlite3_prepare_v2(sqlitedb, sql2, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot prepare statement: %d: %s\n", rc, sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot prepare statement: %d: %s\n", rc, sqlite3_errmsg(sqlitedb));
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return;
     }
 
     // bind parameters
     rc = sqlite3_bind_blob(stmt, 1, digest, 20, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot bind digest: %d: %s\n", rc, sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot bind digest: %d: %s\n", rc, sqlite3_errmsg(sqlitedb));
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return;
     }
 
     rc = sqlite3_bind_int(stmt, 2, len);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot bind len : %d: %s\n", rc, sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot bind len : %d: %s\n", rc, sqlite3_errmsg(sqlitedb));
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return;
     }
 
     rc = sqlite3_bind_text(stmt, 3, state, -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot bind state: %d: %s\n", rc, sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot bind state: %d: %s\n", rc, sqlite3_errmsg(sqlitedb));
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return;
     }
 
@@ -76,17 +72,14 @@ void writeOneStateToSQLiteDatabase(char *state, size_t len, const char digest[HA
     // if the state is already in the database, nothing happens.
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
-        fprintf(stderr, "Cannot insert state: %d: %s\n", rc, sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot insert state: %d: %s\n", rc, sqlite3_errmsg(sqlitedb));
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return;
     }
     sqlite3_finalize(stmt);
-    sqlite3_close(db);
 }
 
 char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldLen) {
-    sqlite3 *db;
     sqlite3_stmt *stmt = NULL;
     char databaseDigest[HASH_LEN];
     char newDigest[HASH_LEN];
@@ -95,27 +88,20 @@ char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldL
     char *state = NULL;
     int rc;
 
-    db = getSqliteDB();
-    if(db == NULL) {
-        return NULL;
-    }
-
     // perpare statement to select by digest
     const char *sql2 = "SELECT digest, len, state FROM state WHERE digest = ?";
-    rc = sqlite3_prepare_v2(db, sql2, -1, &stmt, NULL);
+    rc = sqlite3_prepare_v2(sqlitedb, sql2, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot prepare statement: %d: %s\n", rc, sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot prepare statement: %d: %s\n", rc, sqlite3_errmsg(sqlitedb));
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return NULL;
     }
 
     //bind parameters
     rc = sqlite3_bind_blob(stmt, 1, digest, HASH_LEN, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot bind digest: %d: %s\n", rc, sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot bind digest: %d: %s\n", rc, sqlite3_errmsg(sqlitedb));
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return NULL;
     }
 
@@ -124,7 +110,6 @@ char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldL
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_ROW) {
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return NULL;
     }
 
@@ -145,7 +130,6 @@ char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldL
     state[len] = '\0';
 
     sqlite3_finalize(stmt);
-    sqlite3_close(db);
 
     // compare databaseDigest with newly calcultated digest
     hash(state, (int) len, newDigest);
@@ -158,32 +142,24 @@ char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldL
 }
 
 void deleteOneStateFromSQLiteDatabase(char digest[HASH_LEN]) {
-    sqlite3 *db;
     sqlite3_stmt *stmt = NULL;
     int rc;
 
-    db = getSqliteDB();
-    if(db == NULL) {
-        return;
-    }
-
     // prepare statement to delete row by digest
     const char *sql2 = "DELETE FROM state WHERE digest = ?";
-    rc = sqlite3_prepare_v2(db, sql2, -1, &stmt, NULL);
+    rc = sqlite3_prepare_v2(sqlitedb, sql2, -1, &stmt, NULL);
 
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot prepare statement: %d: %s\n", rc, sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot prepare statement: %d: %s\n", rc, sqlite3_errmsg(sqlitedb));
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return;
     }
 
     // bind parameter
     rc = sqlite3_bind_blob(stmt, 1, digest, HASH_LEN, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot bind digest: %d: %s\n", rc, sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot bind digest: %d: %s\n", rc, sqlite3_errmsg(sqlitedb));
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return;
     }
 
@@ -193,30 +169,21 @@ void deleteOneStateFromSQLiteDatabase(char digest[HASH_LEN]) {
     if (rc != SQLITE_DONE) {
         fprintf(stderr, "Cannot delete row: \n");
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return;
     }
     sqlite3_finalize(stmt);
-    sqlite3_close(db);
 }
 
 void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *const q) {
-    sqlite3 *db;
-    sqlite3_stmt *stmt = NULL;
-
     int rc;
-    db = getSqliteDB();
-    if(db == NULL) {
-        return;
-    }
+    sqlite3_stmt *stmt = NULL;
 
     // prepare statement to restore all states from database
     const char *sql2 = "SELECT digest, len, state FROM state";
-    rc = sqlite3_prepare_v2(db, sql2, -1, &stmt, NULL);
+    rc = sqlite3_prepare_v2(sqlitedb, sql2, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(db));
+        fprintf(stderr, "Cannot prepare statement: %s\n", sqlite3_errmsg(sqlitedb));
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return;
     }
 
@@ -241,5 +208,4 @@ void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *const q)
         }
     }
     sqlite3_finalize(stmt);
-    sqlite3_close(db);
 }

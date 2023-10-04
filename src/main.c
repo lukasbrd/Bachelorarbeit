@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include "settings.h"
 #include <time.h>
+#include "berkeleyDB.h"
+#include "sqliteDB.h"
 
 int main(void) {
     zsock_t *commandSocket = zsock_new_push("inproc://command");
@@ -22,6 +24,14 @@ int main(void) {
     }
     pthread_mutex_unlock(&mutex);
 
+#ifdef BERKELEYDB
+    initBerkeleyDB();
+#endif
+
+#ifdef SQLITE
+    initSqliteDB();
+#endif
+
 #ifdef RESTOREALLSTATESTOQUEUE
     restoreAllStatesToQueue(commandSocket, q);
 #endif
@@ -29,7 +39,7 @@ int main(void) {
     srand(0);
     for (int i = 1; i <= NUMBEROFSTATES; i++) {
         char *state = createState(i);
-        //printf("Start:%s\n", state);
+        printf("Start:%s\n", state);
         sendElement(commandSocket, state, ENQUEUE, q);
     }
 
@@ -37,14 +47,23 @@ int main(void) {
         Element *receivedElement;
         receivedElement = receiveElement(commandSocket, packageSocket, q);
         deleteOneStateFromPersistentStorage(receivedElement);
-        //printf("Ende: %s\n", receivedElement->state);
+        printf("Ende: %s\n", receivedElement->state);
         free(receivedElement->state);
         free(receivedElement);
     }
+
     zsock_send(commandSocket, "ip", TERMINATE, NULL);
     pthread_join(thread, NULL);
     zsock_destroy(&commandSocket);
     zsock_destroy(&packageSocket);
     free(q);
+
+#ifdef BERKELEYDB
+    closeBerkeleyDB();
+#endif
+
+#ifdef SQLITE
+    closeSQLiteDB();
+#endif
     return 0;
 }
