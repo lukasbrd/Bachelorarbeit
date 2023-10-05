@@ -14,7 +14,7 @@ void initBerkeleyDB() {
         exit(1);
     }
 
-    rc = berkeleydb->open(berkeleydb, NULL, "berkeleyDB/berkeley.db", NULL, DB_HASH, DB_CREATE, 0600);
+    rc = berkeleydb->open(berkeleydb, NULL, "berkeleyDB/berkeley.db", NULL, DB_BTREE, DB_CREATE, 0600);
     if (rc != 0) {
         fprintf(stderr, "Cannot open BerkeleyDB: %s\n", db_strerror(rc));
         exit(1);
