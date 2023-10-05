@@ -9,6 +9,7 @@
 #include <time.h>
 #include "berkeleyDB.h"
 #include "sqliteDB.h"
+#include "unistd.h"
 
 int main(void) {
     zsock_t *commandSocket = zsock_new_push("inproc://command");
@@ -39,17 +40,15 @@ int main(void) {
     srand(0);
     for (int i = 1; i <= NUMBEROFSTATES; i++) {
         char *state = createState(i);
-        printf("Start:%s\n", state);
         sendElement(commandSocket, state, ENQUEUE, q);
-    }
 
-    while (q->qLength > 0) {
         Element *receivedElement;
         receivedElement = receiveElement(commandSocket, packageSocket, q);
         deleteOneStateFromPersistentStorage(receivedElement);
-        printf("Ende: %s\n", receivedElement->state);
         free(receivedElement->state);
         free(receivedElement);
+
+        usleep(10000);
     }
 
     zsock_send(commandSocket, "ip", TERMINATE, NULL);
