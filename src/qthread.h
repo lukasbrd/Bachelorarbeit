@@ -7,7 +7,7 @@ extern volatile bool threadRunning;
 extern pthread_cond_t condition;
 extern pthread_mutex_t mutex;
 
-#define ENQUEUE 1
+#define NEWSTATE 1
 #define RESTORED 2
 #define DEQUEUE 3
 #define TERMINATE 4

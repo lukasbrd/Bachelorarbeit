@@ -24,14 +24,23 @@ void *qthread(void *args) {
         Element *element = NULL;
         zsock_recv(commandSocket, "ip", &cmd, &element);
         commandReceiver(&commandSocket, &packageSocket, q, cmd, element);
+
     }
 }
 
+size_t counter;
+
 void commandReceiver(zsock_t **commandSocket, zsock_t **packageSocket, Queue *q, int cmd, Element *element) {
-    if(cmd == ENQUEUE) {
+    if(cmd == NEWSTATE) {
+        counter++;
         persistOneState(element);
         deleteStateIfMemFull(q, element);
         enqueue(q, element);
+        /*
+        if(counter == 20) {
+
+            assert(0);
+        }*/
     } else if (cmd == RESTORED) {
         deleteStateIfMemFull(q, element);
         enqueue(q, element);

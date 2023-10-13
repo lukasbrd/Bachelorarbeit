@@ -39,17 +39,19 @@ int main(void) {
     srand(0);
     for (int i = 1; i <= NUMBEROFSTATES; i++) {
         char *state = createState(i);
-        printf("Start:%s\n", state);
-        sendElement(commandSocket, state, ENQUEUE, q);
-    }
+        //printf("Start:%s\n", state);
+        enqueueElementWithState(commandSocket, state, NEWSTATE, q);
+     }
 
     while (q->qLength > 0) {
-        Element *receivedElement;
-        receivedElement = receiveElement(commandSocket, packageSocket, q);
-        deleteOneStateFromPersistentStorage(receivedElement);
-        printf("Ende: %s\n", receivedElement->state);
-        free(receivedElement->state);
-        free(receivedElement);
+        Element *dequeuedElement;
+        dequeuedElement = dequeueElementWithState(commandSocket, packageSocket, q);
+#ifdef DELETESTATESAFTEREXECUTION
+        deleteOneStateFromPersistentStorage(dequeuedElement);
+#endif
+        //printf("Ende: %s\n", dequeuedElement->state);
+        free(dequeuedElement->state);
+        free(dequeuedElement);
     }
 
     zsock_send(commandSocket, "ip", TERMINATE, NULL);

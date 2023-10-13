@@ -34,18 +34,21 @@ void writeOneStateToBerkeleyDB(char *state, size_t len, char digest[HASH_LEN]){
 
     memset(&key, 0, sizeof(DBT));
     memset(&data, 0, sizeof(DBT));
-    key.data = digest;
-    key.size = HASH_LEN;
-    data.data = state;
-    data.size = len;
 
-    rc = berkeleydb->put(berkeleydb, NULL, &key, &data, 0);
+    key.size = HASH_LEN;
+    key.data = digest;
+
+    data.size = len;
+    data.data = state;
+
+    rc = berkeleydb->put(berkeleydb,NULL, &key, &data, 0);
     if (rc != 0) {
         fprintf(stderr, "Cannot insert data into Berkeley DB\n");
     }
 }
 
 char *restoreOneStateFromBerkeleyDB(char digest[HASH_LEN], size_t oldLen) {
+
     int rc;
     char newDigest[HASH_LEN];
     char *state = NULL;
@@ -53,8 +56,9 @@ char *restoreOneStateFromBerkeleyDB(char digest[HASH_LEN], size_t oldLen) {
 
     memset(&key, 0, sizeof(DBT));
     memset(&data, 0, sizeof(DBT));
-    key.data = digest;
+
     key.size = HASH_LEN;
+    key.data = digest;
 
     // if the state is not found, NULL is returned
     rc = berkeleydb->get(berkeleydb, NULL, &key, &data, 0);
@@ -63,7 +67,7 @@ char *restoreOneStateFromBerkeleyDB(char digest[HASH_LEN], size_t oldLen) {
     }
 
     if (data.size != oldLen) {
-        fprintf(stderr, "The old stateLength is different from the restored stateLength.\n");
+        fprintf(stderr, "A saved stateLength is different from the restored stateLength.\n");
         return NULL;
     }
 
@@ -73,7 +77,7 @@ char *restoreOneStateFromBerkeleyDB(char digest[HASH_LEN], size_t oldLen) {
 
     hash(state, (int) data.size, newDigest);
     if (memcmp(key.data, newDigest , HASH_LEN) != 0) {
-        fprintf(stderr, "The State was corrupted.\n ");
+        fprintf(stderr, "A state was corrupted.\n ");
         free(state);
         return NULL;
     }
@@ -113,11 +117,11 @@ void restoreAllStatesFromBerkeleyDBToQueue(zsock_t *command, Queue *const q) {
 
         hash(state, (int) data.size, newDigest);
         if (memcmp(databaseDigest, newDigest, HASH_LEN) != 0) {
-            fprintf(stderr, "The state was corrupted.\n");
+            fprintf(stderr, "A state was corrupted.\n");
             free(state);
         } else {
             printf("Restored:%s\n", state);
-            sendElement(command, state, RESTORED, q);
+            enqueueElementWithState(command, state, RESTORED, q);
         }
     }
     cursor->c_close(cursor);

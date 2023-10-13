@@ -14,7 +14,6 @@ void writeOneStateToFileStorage(char *state, size_t len, const char digest[HASH_
     if ((fd = open(dir, O_WRONLY | O_CREAT | O_EXCL, 00600)) == -1) {
         return;
     }
-
     char buf[28 + len];
 
     memcpy(buf, digest, 20);
@@ -22,6 +21,7 @@ void writeOneStateToFileStorage(char *state, size_t len, const char digest[HASH_
     memcpy(buf + 28, state, len);
 
     write(fd, buf, (28 + len));
+    fsync(fd);
     close(fd);
 }
 
@@ -49,7 +49,7 @@ char *restoreOneStateFromFileStorage(const char digest[HASH_LEN], size_t oldLen)
     memcpy(&len, buf + 20, sizeof(size_t));
 
     if (len != oldLen) {
-        fprintf(stderr, "The old stateLength is different from the restored stateLength.\n");
+        fprintf(stderr, "A saved stateLength is different from the restored stateLength.\n");
         return NULL;
     }
 
@@ -60,7 +60,7 @@ char *restoreOneStateFromFileStorage(const char digest[HASH_LEN], size_t oldLen)
 
     hash(state, (int) len, newDigest);
     if (memcmp(fileDigest, newDigest , HASH_LEN) != 0) {
-        fprintf(stderr, "The State was corrupted.\n ");
+        fprintf(stderr, "A State was corrupted.\n ");
         free(state);
         return NULL;
     }
@@ -95,6 +95,13 @@ void restoreAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
         while ((dp = readdir(dir))) {
             if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
                 fd = openat(dirfd(dir), dp->d_name, O_RDONLY);
+                off_t endOfFile = lseek(fd, 0, SEEK_END);
+                if(endOfFile < 29) {
+                    close(fd);
+                    continue;
+                } else {
+                    lseek(fd,0, SEEK_SET);
+                }
                 read(fd, buf, 28);
                 memcpy(fileDigest, buf, 20);
                 memcpy(&len, buf + 20, sizeof(size_t));
@@ -103,11 +110,11 @@ void restoreAllStatesFromFileStorageToQueue(zsock_t *command, Queue *const q) {
                 read(fd, state, len);
                 hash(state, (int) len, newDigest);
                 if (memcmp(fileDigest, newDigest , HASH_LEN) != 0) {
-                    fprintf(stderr, "The State was corrupted.\n ");
+                    fprintf(stderr, "A State was corrupted.\n ");
                     free(state);
                 } else {
                     printf("Restored: %s\n", state);
-                    sendElement(command, state, RESTORED, q);
+                    enqueueElementWithState(command, state, RESTORED, q);
                 }
                 close(fd);
             }

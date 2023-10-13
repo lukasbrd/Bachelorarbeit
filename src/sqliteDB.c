@@ -119,7 +119,7 @@ char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldL
     // read databaseLength
     len = sqlite3_column_int(stmt, 1);
     if (len != oldLen) {
-        fprintf(stderr, "The old stateLength is different from the restored stateLength.\n");
+        fprintf(stderr, "A stateLength is different from the restored stateLength.\n");
         return NULL;
     }
 
@@ -131,10 +131,10 @@ char *restoreOneStateFromSQLiteDatabase(const char digest[HASH_LEN], size_t oldL
 
     sqlite3_finalize(stmt);
 
-    // compare databaseDigest with newly calcultated digest
+    // compare databaseDigest with newly calculated digest
     hash(state, (int) len, newDigest);
     if (memcmp(databaseDigest, newDigest , HASH_LEN) != 0) {
-        fprintf(stderr, "The State was corrupted.\n ");
+        fprintf(stderr, "A state was corrupted.\n ");
         free(state);
         return NULL;
     }
@@ -200,11 +200,11 @@ void restoreAllStatesFromSQLiteDatabaseToQueue(zsock_t *command, Queue *const q)
 
         hash(state, (int) len, newDigest);
         if (memcmp(databaseDigest, newDigest , HASH_LEN) != 0) {
-            fprintf(stderr, "The State was corrupted.\n ");
+            fprintf(stderr, "A state was corrupted.\n ");
             free(state);
         } else {
             printf("Restored: %s\n", state);
-            sendElement(command, state, RESTORED, q);
+            enqueueElementWithState(command, state, RESTORED, q);
         }
     }
     sqlite3_finalize(stmt);

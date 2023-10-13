@@ -26,10 +26,10 @@ void test_sendElement(void **state) {
 
     expect_any(__wrap_zsock_send, commandSocket);
     expect_string(__wrap_zsock_send, picture, "ip");
-    expect_value(__wrap_zsock_send, cmd, ENQUEUE);
+    expect_value(__wrap_zsock_send, cmd, NEWSTATE);
     expect_any(__wrap_zsock_send, element);
 
-    sendElement(commandSocket, term, ENQUEUE, q);
+    enqueueElementWithState(commandSocket, term, NEWSTATE, q);
 
     assert_int_equal(q->qLength,1);
     zsock_destroy(&commandSocket);
@@ -52,7 +52,7 @@ void test_receiveElement(void **state) {
     expect_string(__wrap_zsock_recv, picture, "p");
     expect_any(__wrap_zsock_recv, receivedElement);
 
-    receiveElement(commandSocket,packageSocket,q);
+    dequeueElementWithState(commandSocket, packageSocket, q);
 
     assert_int_equal(q->qLength,0);
 

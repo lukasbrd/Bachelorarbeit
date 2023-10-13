@@ -1,14 +1,17 @@
 // Uncomment the constant to restore all states in the persistent Storage to Queue.
-#define RESTOREALLSTATESTOQUEUE
+//#define RESTOREALLSTATESTOQUEUE
+
+//Uncomment the constant to delete all created states from persistent Storage after the execution.
+#define DELETESTATESAFTEREXECUTION
 
 // Decide how many states are created.
-#define NUMBEROFSTATES 40
+#define NUMBEROFSTATES 1000
 
 // Decide how long the states can become.
-#define MAXADDEDLENGTH 10
+#define MAXADDEDLENGTH 100
 
 // Decide how many states should stay in memory.
-#define MAXINMEMORY 50
+#define MAXINMEMORY 0
 
 // Uncomment one constant to choose the persistence-mode of the program.
 // #define FILEHANDLER

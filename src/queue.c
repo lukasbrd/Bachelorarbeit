@@ -39,7 +39,7 @@ Element *dequeue(Queue *const q) {
     return res;
 }
 
-/*
+
 void printAllStatesOfElements(Queue const *const q) {
     Element *tmp = q->first;
     while (tmp != NULL) {
@@ -56,4 +56,4 @@ void printElement(Element *element) {
     //memcpy(digestmain, element->digest, HASH_LEN);
     //digestmain[HASH_LEN] = '\0';
     //printf("digest:%s\n", digestmain);
-}*/
+}

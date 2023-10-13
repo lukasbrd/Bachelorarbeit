@@ -6,6 +6,6 @@
 #include "hash.h"
 #include <czmq.h>
 
-void sendElement(zsock_t *commandSocket, char *state, int cmd, Queue *q);
-Element *receiveElement(zsock_t *commandSocket, zsock_t *packageSocket, Queue *q);
+void enqueueElementWithState(zsock_t *commandSocket, char *state, int cmd, Queue *q);
+Element *dequeueElementWithState(zsock_t *commandSocket, zsock_t *packageSocket, Queue *q);
 #endif
