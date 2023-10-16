@@ -28,7 +28,7 @@ void *qthread(void *args) {
     }
 }
 
-size_t counter;
+int counter;
 
 void commandReceiver(zsock_t **commandSocket, zsock_t **packageSocket, Queue *q, int cmd, Element *element) {
     if(cmd == NEWSTATE) {
@@ -36,11 +36,9 @@ void commandReceiver(zsock_t **commandSocket, zsock_t **packageSocket, Queue *q,
         persistOneState(element);
         deleteStateIfMemFull(q, element);
         enqueue(q, element);
-        /*
         if(counter == 20) {
-
             assert(0);
-        }*/
+        }
     } else if (cmd == RESTORED) {
         deleteStateIfMemFull(q, element);
         enqueue(q, element);
