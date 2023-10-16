@@ -21,7 +21,6 @@ void writeOneStateToFileStorage(char *state, size_t len, const char digest[HASH_
     memcpy(buf + 28, state, len);
 
     write(fd, buf, (28 + len));
-    fsync(fd);
     close(fd);
 }
 
