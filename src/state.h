@@ -1,4 +1,7 @@
+#ifndef STATE
+#define STATE
 
-int getAddedLength();
 char *createState(int numberOfCalls);
 int numberOfDigits(int i);
+
+#endif
