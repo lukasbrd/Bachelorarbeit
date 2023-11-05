@@ -1,12 +1,17 @@
 #include "qthread.h"
 #include "persistenceInterface.h"
+
+#ifndef TESTING
 #include "settings.h"
+#endif
+
+#ifdef TESTING
+#define MAXINMEMORY 2
+#endif
 
 volatile bool threadRunning = false;
 pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
-
 
 void *qthread(void *args) {
     zsock_t *commandSocket = zsock_new_pull("inproc://command");
@@ -24,7 +29,6 @@ void *qthread(void *args) {
         Element *element = NULL;
         zsock_recv(commandSocket, "ip", &cmd, &element);
         commandReceiver(&commandSocket, &packageSocket, q, cmd, element);
-
     }
 }
 

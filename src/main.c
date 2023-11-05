@@ -46,7 +46,7 @@ int main(void) {
     while (q->qLength > 0) {
         Element *dequeuedElement;
         dequeuedElement = dequeueElementWithState(commandSocket, packageSocket, q);
-#ifdef DELETESTATESAFTEREXECUTION
+#ifdef DELETEREGAINEDSTATES
         deleteOneStateFromPersistentStorage(dequeuedElement);
 #endif
         //printf("Ende: %s\n", dequeuedElement->state);
